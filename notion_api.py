@@ -1,17 +1,16 @@
 import requests
 
 class Notion_Tasklist(object):
-    NOTION_INTEGRATION_SECRET = ""
-
-    def __init__(self, database_id):
+    def __init__(self, database_id, notion_integration_secret):
         self.database_id = database_id
+        self.notion_integration_secret = notion_integration_secret
         self.json = None
 
         self.open_tasks = []
 
         self.headers = {
             "Accept": "application/json",
-            "Authorization": "Bearer " + self.NOTION_INTEGRATION_SECRET,
+            "Authorization": "Bearer " + self.notion_integration_secret,
             "Content-Type": "application/json",
             "Notion-Version": "2022-06-28"
         }
@@ -21,6 +20,7 @@ class Notion_Tasklist(object):
         self.get_open_tasks()
 
     def get_open_tasks(self):
+        self.open_tasks.clear()
         # filter to only retrieve open tasks
         filter_object = {
             "or":
@@ -55,5 +55,3 @@ class Notion_Tasklist(object):
                 task["properties"]["est. time"]["number"],                    # retrieve estimated time
                 task["properties"]["priority"]["number"],                     # retrieve priority
             ])
-
-
