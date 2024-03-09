@@ -3,6 +3,8 @@ import requests
 from win32com.client import Dispatch
 from ics import Calendar
 
+test_datetime = datetime.datetime(2024, 3, 20, 8, 0)
+
 class Calendar_Integration(object):
     def __init__(self, calendar_type, calendar_url: str = None):
         self.calendar_type = calendar_type
@@ -30,24 +32,26 @@ class Calendar_Integration(object):
 
         # sort appointments
         appointments.Sort("[Start]")
+        appointments = list(appointments)
+        appointments.reverse()
 
-        now = datetime.datetime.today()
+        now = test_datetime
 
         # Iterate through each item in the Calendar folder
         for item in appointments:
             # only get appointments from now until 20 days in the future
-            item_start_date = datetime.datetime.fromisoformat(str(item.Start)).replace(tzinfo=None)
+            item_end_date = datetime.datetime.fromisoformat(str(item.End)).replace(tzinfo=None)
 
-            if now <= item_start_date < now + datetime.timedelta(days = 20):
+            if now <= item_end_date < now + datetime.timedelta(days = 20):
                 self.appointments.append([
-                    item.Subject,                                            # title
-                    datetime.datetime.fromisoformat(str(item.Start)),        # start time
-                    datetime.datetime.fromisoformat(str(item.End)),          # end time
-                    item.Location                                            # location
+                    item.Subject,                                                                 # title
+                    datetime.datetime.fromisoformat(str(item.Start)).replace(tzinfo=None),        # start time
+                    datetime.datetime.fromisoformat(str(item.End)).replace(tzinfo=None),          # end time
+                    item.Location                                                                 # location
                 ])
 
-            # end loop for appointments to far in the future
-            elif item_start_date > now + datetime.timedelta(days = 20):
+            # end loop for appointments in the past
+            elif item_end_date < now:
                 break
 
     def get_url_calendar_appointments(self):
@@ -58,24 +62,24 @@ class Calendar_Integration(object):
             # Parse the calendar data
             calendar = Calendar(response.text)
 
-            now = datetime.datetime.today()
+            now = test_datetime
 
-            # Print information about each event
+            # Iterate through each item in the Calendar folder
             sorted_events = sorted(calendar.events, key=lambda event: event.begin)
             for event in reversed(sorted_events):
                 # only get appointments from now until 20 days in the future
-                item_start_date  = datetime.datetime.fromisoformat(str(event.begin)).replace(tzinfo=None)
+                item_end_date  = datetime.datetime.fromisoformat(str(event.end)).replace(tzinfo=None)
 
-                if now <= item_start_date < now + datetime.timedelta(days=20):
+                if now <= item_end_date < now + datetime.timedelta(days=20):
                     self.appointments.append([
-                        event.name,                                            # title
-                        datetime.datetime.fromisoformat(str(event.begin)),     # start time
-                        datetime.datetime.fromisoformat(str(event.end)),       # end time
-                        event.location                                         # location
+                        event.name,                                                                 # title
+                        datetime.datetime.fromisoformat(str(event.begin)).replace(tzinfo=None),     # start time
+                        datetime.datetime.fromisoformat(str(event.end)).replace(tzinfo=None),       # end time
+                        event.location                                                              # location
                     ])
 
-                # end loop for appointments to far in the future
-                elif item_start_date > now + datetime.timedelta(days=20):
+                # end loop for appointments in the past
+                elif item_end_date < now:
                     break
         else:
             print(f"Failed to fetch calendar data. Status code: {response.status_code}")

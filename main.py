@@ -1,5 +1,6 @@
 from notion_api import Notion_Tasklist
 from calendar_api import Calendar_Integration
+from genetic import Genetic_algorithm
 from config import notion_integration_secret
 
 # collect task's from multiple todo_list's
@@ -16,5 +17,5 @@ school_calendar = Calendar_Integration("url", 'URL')
 # combine appointments
 appointments = private_calendar.appointments + school_calendar.appointments
 
-
-print(todos, appointments)
+# genetic algorithm
+gen_algo = Genetic_algorithm(todos, appointments)

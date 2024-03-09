@@ -1,1 +1,1 @@
-notion_integration_secret = None
+notion_integration_secret = "Notion integration secret"
