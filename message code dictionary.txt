@@ -1,0 +1,53 @@
+--- 100 -> Google Calendar Controls ---
+
+101  => Request and send Google Calendar Status
+    - backend message content:  [connection status, appointment retrieval status]
+102 => Request and send avilable google Calendar list
+103 => Request and send Appointments
+    - frontend message content: calendar name
+    - backend message content: [calendar name, appointments]
+104 => Update google Calendars
+    "AC" -> append calendar from calendars that are being taken into consideration
+    "RC" -> remove calendar from calendars that are being taken into consideration
+
+--- 200 -> Todo_list Controls ---
+
+201 => Update notion integration secret
+    - message content "new notion secret"
+202 => Request and send Todo_list Status
+203 => Request and send Todos
+204 => Update Todo_lists
+    "AT" -> append new todo_list to list
+    "UT" -> Update todo_list specifications
+    "RT" -> remove todo_list from list
+205 => Update Notion tod_list hidden settings
+    - message content [todolist name, hidden state]
+
+--- 300 -> Schedule Todos ---
+
+301 => Schedule Todos Status/requests
+
+--- 400 -> Home.py Requests ---
+
+401 => Request and send Todos from/for Home.py
+402 => Request and send Calendar Appointments from/for Home.py
+    - frontend message content: [start, end]
+    - backend message content:  [calendars, ...]
+403 => Update Todos
+    "AT" -> Update todos specifications
+    "CT" -> set todo_state to done (check todos)
+        - frontend message content: ["CT", todolist_name, todo_name]
+        - backend message content: ["CT", todolist_name, todo_name]
+404 => Active Todos
+    - will only send from backend to the frontend
+405 => Update scheduling todos button label
+    - will only send from backend to the frontend
+
+--- 500 -> Settings ---
+
+--- 600 -> close program ---
+
+601 => save config to config.py
+    - message only from frontend to backend without any message content
+602 => end program
+    - message only from backend to frontend without any message content

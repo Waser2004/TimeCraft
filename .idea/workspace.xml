@@ -4,12 +4,41 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="slightly update notion_api.py and integrated calendar_api.py">
-      <change afterPath="$PROJECT_DIR$/genetic.py" afterDir="false" />
+    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="added genetic.py">
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/TimeCraft_Icon.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/error_red.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/error_yellow.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/eye_hide.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/eye_view.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/notion_logo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/sources.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/trash_bin_red.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/trash_bin_white.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Integrations/google_calendar_integration.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/calendar.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/checkbox.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/circle.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/entry.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/image.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/line.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/rectangle.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/text.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/todo_list.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/home.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/integrations_calendar.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/integrations_todo_list.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Routes/nav_bar.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/calendar_data.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/message code dictionary.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/calendar_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/calendar_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/calendar_api.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/genetic.py" beforeDir="false" afterPath="$PROJECT_DIR$/genetic.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notion_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/Integrations/notion_todo_list_integration.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,20 +66,39 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Python.GUI.executor&quot;: &quot;Run&quot;,
     &quot;Python.Notion_Database.executor&quot;: &quot;Run&quot;,
     &quot;Python.Outlook_Calendar_Connection.executor&quot;: &quot;Run&quot;,
+    &quot;Python.backend.executor&quot;: &quot;Run&quot;,
+    &quot;Python.calendar.executor&quot;: &quot;Run&quot;,
     &quot;Python.calendar_api (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.entry.executor&quot;: &quot;Run&quot;,
+    &quot;Python.frontend (1).executor&quot;: &quot;Run&quot;,
     &quot;Python.genetic.executor&quot;: &quot;Run&quot;,
+    &quot;Python.google_calendar_integration.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gui (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.home.executor&quot;: &quot;Run&quot;,
+    &quot;Python.integrations_calendar.executor&quot;: &quot;Run&quot;,
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.nav_bar.executor&quot;: &quot;Run&quot;,
     &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.todo_list.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\2. Programmieren\TimeCraft, an Adaptive Calendar\Integrations\Google_API_Config" />
+      <recent name="D:\2. Programmieren\TimeCraft, an Adaptive Calendar\Integrations" />
+      <recent name="D:\2. Programmieren\TimeCraft, an Adaptive Calendar\Routes" />
+    </key>
+  </component>
   <component name="RunManager" selected="Python.main">
-    <configuration name="calendar_api (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="calendar" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="TimeCraft, an Adaptive Calendar" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -59,11 +107,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Routes/Tkinter_Elemts" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/calendar_api.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Routes/Tkinter_Elemts/calendar.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -72,7 +120,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="calendar_api" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="home" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="TimeCraft, an Adaptive Calendar" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -81,33 +129,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Routes" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="D:\2. Programmieren\TimeCraft, an Adaptive Calendar\calendar_api.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="genetic" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="TimeCraft, an Adaptive Calendar" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/genetic.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Routes/home.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -160,20 +186,42 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="todo_list" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="TimeCraft, an Adaptive Calendar" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Routes/Tkinter_Elemts" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Routes/Tkinter_Elemts/todo_list.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Python.main" />
         <item itemvalue="Python.test" />
-        <item itemvalue="Python.genetic" />
-        <item itemvalue="Python.calendar_api (1)" />
-        <item itemvalue="Python.calendar_api" />
+        <item itemvalue="Python.home" />
+        <item itemvalue="Python.calendar" />
+        <item itemvalue="Python.todo_list" />
       </list>
     </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-50da183f06c8-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.13135.95" />
+        <option value="bundled-python-sdk-d68999036c7f-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.14475.56" />
       </set>
     </attachedChunks>
   </component>
@@ -202,12 +250,69 @@
       <option name="project" value="LOCAL" />
       <updated>1709642156707</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="added genetic.py">
+      <option name="closed" value="true" />
+      <created>1709996359427</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1709996359427</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Notion integration" />
     <MESSAGE value="slightly update notion_api.py and integrated calendar_api.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="slightly update notion_api.py and integrated calendar_api.py" />
+    <MESSAGE value="added genetic.py" />
+    <option name="LAST_COMMIT_MESSAGE" value="added genetic.py" />
+  </component>
+  <component name="com.github.evgenys91.machinet.common.dslhistory.DslHistoryState">
+    <option name="historyDtoById">
+      <map>
+        <entry key="3fe726">
+          <value>
+            <ChatHistoryModel>
+              <option name="id" value="3fe726" />
+              <option name="initiateTms" value="1713725029650" />
+              <option name="request" value="I am having a bug when I am resizing the window, and I am on the home page, the todolis todos will disapear randomly can you help me fix it?" />
+              <option name="response" value="" />
+              <option name="responseDescription" value="Hello! It seems like you're experiencing a bug with the todo list on the home page. I'd be happy to help you with that, but first, could you please [sign in](https://www.machinet.net/#signin) and [subscribe](https://www.machinet.net/#pricing) to Machinet AI? Once you're signed in and subscribed, I can assist you further." />
+              <option name="responseFileName" value="" />
+              <option name="responseFilePath" value="" />
+              <option name="responseTms" value="1713725033575" />
+              <option name="usedLocalFilePaths">
+                <list>
+                  <option value="$PROJECT_DIR$/Routes/home.py" />
+                </list>
+              </option>
+            </ChatHistoryModel>
+          </value>
+        </entry>
+        <entry key="greeting">
+          <value>
+            <ChatHistoryModel>
+              <option name="id" value="greeting" />
+              <option name="initiateTms" value="1713724976255" />
+              <option name="request" value="" />
+              <option name="response" value="" />
+              <option name="responseDescription" value="&#10;Hello, I am Machinet AI - context aware chat, which can help you with your daily programming routine. How can I help?" />
+              <option name="responseTms" value="1713724977974" />
+            </ChatHistoryModel>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
