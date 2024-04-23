@@ -1,3 +1,5 @@
+<img src="/Assets/TimeCraft_logo.png" width="300" height="300">
+
 # TimeCraft
 TimeCraft is a program that allows you to synchronize your Todo lists from Notion with your Google Calendar. With TimeCraft, you can schedule your tasks efficiently to optimize your daily agenda. It employs a genetic algorithm to determine the optimal scheduling of your tasks within your calendar.
 
