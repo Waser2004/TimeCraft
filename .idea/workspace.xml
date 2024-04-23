@@ -4,41 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="added genetic.py">
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/TimeCraft_Icon.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/error_red.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/error_yellow.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/eye_hide.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/eye_view.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/notion_logo.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/sources.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/trash_bin_red.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/trash_bin_white.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Integrations/google_calendar_integration.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/calendar.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/checkbox.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/circle.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/entry.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/image.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/line.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/rectangle.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/text.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/todo_list.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/home.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/integrations_calendar.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/integrations_todo_list.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Routes/nav_bar.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/calendar_data.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message code dictionary.txt" afterDir="false" />
+    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="Time Craft V0.1">
+      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/dropdown.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/calendar_api.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/TimeCraft_Icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/Tkinter_Elemts/entry.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/entry.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend.py" beforeDir="false" afterPath="$PROJECT_DIR$/frontend.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/genetic.py" beforeDir="false" afterPath="$PROJECT_DIR$/genetic.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notion_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/Integrations/notion_todo_list_integration.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,6 +27,23 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Waser2004&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">
+    <option name="selectedUrlAndAccountId">
+      <UrlAndAccount>
+        <option name="accountId" value="a9f0ac0f-7683-440d-849b-c574b248f66a" />
+        <option name="url" value="https://github.com/Waser2004/TimeCraft.git" />
+      </UrlAndAccount>
+    </option>
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
@@ -258,7 +248,15 @@
       <option name="project" value="LOCAL" />
       <updated>1709996359427</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Time Craft V0.1">
+      <option name="closed" value="true" />
+      <created>1713863402243</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1713863402243</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -276,7 +274,8 @@
     <MESSAGE value="Notion integration" />
     <MESSAGE value="slightly update notion_api.py and integrated calendar_api.py" />
     <MESSAGE value="added genetic.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="added genetic.py" />
+    <MESSAGE value="Time Craft V0.1" />
+    <option name="LAST_COMMIT_MESSAGE" value="Time Craft V0.1" />
   </component>
   <component name="com.github.evgenys91.machinet.common.dslhistory.DslHistoryState">
     <option name="historyDtoById">

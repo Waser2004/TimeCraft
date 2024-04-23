@@ -1,5 +1,6 @@
 import copy
 import tkinter as tk
+from PIL import Image, ImageTk
 import logging
 
 # window elements
@@ -16,6 +17,9 @@ class GUI():
         # set up window
         self.root = tk.Tk()
         self.root.geometry(f"{self.win_size[0]}x{self.win_size[1]}")
+        ico = Image.open('Assets/TimeCraft_logo.png')
+        photo = ImageTk.PhotoImage(ico)
+        self.root.wm_iconphoto(False, photo)
         self.root.title("TimeCraft")
 
         # canvas

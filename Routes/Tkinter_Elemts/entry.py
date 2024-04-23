@@ -1,8 +1,6 @@
-import linecache
 import tkinter as tk
-from tkinter.font import Font
 
-from Routes.Tkinter_Elemts import text, line
+from Routes.Tkinter_Elemts import text
 
 class Entry(object):
     def __init__(self, root: tk.Tk, canvas: tk.Canvas, entry_text: str, corner_1: [int, int], width: int,

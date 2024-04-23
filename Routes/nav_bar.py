@@ -13,7 +13,6 @@ class Nav_Bar(object):
         self.options = {
             "Home": [],
             "Integrations": ["calendar", "todo-list"],
-            "Settings": ["calendar integration", "todo-list integration", "general", "evaluation"]
         }
 
         # Navbar option labels and Separators

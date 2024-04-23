@@ -204,6 +204,7 @@ class Genetic_Algorithm(object):
                             appointments.remove(appointment)
 
                             break
+
                     # task interferes with appointment
                     else:
                         task_timeframe = [appointment[2], appointment[2] + datetime.timedelta(hours=task[1])]
@@ -213,9 +214,6 @@ class Genetic_Algorithm(object):
                             timed_tasks.append([task[0]] + task_timeframe + [task[3]])
 
                         appointments.remove(appointment)
-
-                        break
-
 
         return timed_tasks
 
