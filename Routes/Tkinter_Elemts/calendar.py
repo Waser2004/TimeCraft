@@ -1,17 +1,21 @@
 from datetime import date, datetime, time, timedelta
 from math import floor
 import tkinter as tk
+from tkinter.font import Font
 import re
 
 from Routes.Tkinter_Elemts import entry, line, text, rectangle
 
 
 class Calendar(object):
-    def __init__(self, root: tk.Tk, canvas: tk.Canvas, corner_1: [int, int], corner_2: [int, int], text_color: [int, int, int], secondary_color: [int, int, int]):
+    def __init__(self, root: tk.Tk, canvas: tk.Canvas, corner_1: [int, int], corner_2: [int, int],
+                 text_color: [int, int, int], secondary_color: [int, int, int], editable: bool = False):
         # Tkinter elements
         self.root = root
         self.canvas = canvas
         self.draw_state = False
+
+        self.editable = editable
 
         # calendar position variables
         self.corner_1 = corner_1
@@ -204,6 +208,9 @@ class Calendar(object):
             li.draw()
             la.draw()
 
+            self.canvas.tag_lower(li.object)
+            self.canvas.tag_lower(la.object)
+
         # draw date indicators
         for la, wd_la in zip(self.date_labels, self.date_weekday_labels):
             la.draw()
@@ -212,18 +219,16 @@ class Calendar(object):
         # draw appointments
         for bg in self.appointment_backgrounds:
             bg.draw()
-            self.canvas.tag_raise(bg.object)
 
         for na in self.appointment_name_labels:
             na.draw()
-            if na.object is not None:
-                self.canvas.tag_raise(na.object)
 
         for ti in self.appointment_time_labels:
             ti.draw()
+
             self.canvas.tag_raise(ti.object)
 
-        # current time line
+        # current time_line
         start_time = datetime.combine(datetime.today(), self.time_span[0])
         end_time = datetime.combine(datetime.today(), self.time_span[1])
 
@@ -366,14 +371,14 @@ class Calendar(object):
                         # create elements
                         if self.pop_up_background is None:
                             self.pop_up_background = rectangle.Rectangle(self.canvas, [floor(x_pos), floor(y_pos)], [floor(x_pos + self.pop_up_width), floor(y_pos + 240)], 10, color, 1, outline_color)
-                            self.pop_up_name_entry = entry.Entry(self.root, self.canvas, name, [x_pos + 20, y_pos + 20], self.pop_up_width - 90, color, self.text_color, 20)
+                            self.pop_up_name_entry = entry.Entry(self.root, self.canvas, name, [x_pos + 20, y_pos + 20], self.pop_up_width - 90, color, self.text_color, 20, bind=self.editable)
                             self.pop_up_calendar_label = text.Text(self.canvas, self.appointment_ids[i][0], [x_pos + 20, y_pos + 50], label_color, 10, anchor="nw")
                             self.pop_up_start_label = text.Text(self.canvas, "Starting time: ", [x_pos + 20, y_pos + 100], label_color, 15, anchor="nw")
-                            self.pop_up_start_entry = entry.Entry(self.root, self.canvas, start_time.strftime('%d.%m.%Y %H:%M'), [x_pos + 140, y_pos + 100], self.pop_up_width - 160, color, self.text_color, 15)
+                            self.pop_up_start_entry = entry.Entry(self.root, self.canvas, start_time.strftime('%d.%m.%Y %H:%M'), [x_pos + 140, y_pos + 100], self.pop_up_width - 160, color, self.text_color, 15, bind=self.editable)
                             self.pop_up_end_label = text.Text(self.canvas, "Ending time:", [x_pos + 20, y_pos + 135],label_color, 15, anchor="nw")
-                            self.pop_up_end_entry = entry.Entry(self.root, self.canvas, end_time.strftime('%d.%m.%Y %H:%M'),[x_pos + 140, y_pos + 135], self.pop_up_width - 160, color, self.text_color, 15)
+                            self.pop_up_end_entry = entry.Entry(self.root, self.canvas, end_time.strftime('%d.%m.%Y %H:%M'),[x_pos + 140, y_pos + 135], self.pop_up_width - 160, color, self.text_color, 15, bind=self.editable)
                             self.pop_up_location_label = text.Text(self.canvas, "Location:", [x_pos + 20, y_pos + 170],label_color, 15, anchor="nw")
-                            self.pop_up_location_entry = entry.Entry(self.root, self.canvas, location, [x_pos + 140, y_pos + 170], self.pop_up_width - 160, color, self.text_color, 15, placeholder="No Location")
+                            self.pop_up_location_entry = entry.Entry(self.root, self.canvas, location, [x_pos + 140, y_pos + 170], self.pop_up_width - 160, color, self.text_color, 15, placeholder="No Location", bind=self.editable)
                             self.pop_up_cross_p1 = line.Line(self.canvas, [x_pos + self.pop_up_width - 40, y_pos + 20], [x_pos + self.pop_up_width - 20, y_pos + 40], label_color, 2)
                             self.pop_up_cross_p2 = line.Line(self.canvas, [x_pos + self.pop_up_width - 20, y_pos + 20], [x_pos + self.pop_up_width - 40, y_pos + 40], label_color, 2)
 
@@ -654,7 +659,7 @@ class Calendar(object):
                     rectangle.Rectangle(self.canvas, [floor(x_pos), floor(y_pos)], [floor(x_pos + app_width - 10), floor(y_pos + app_height)], 4, app.color, 0, app.color)
                 )
 
-            # --- label
+            # --- name label --- #
             # sufficient height
             label_x_pos = x_pos + 5
             if app_height > 22:
@@ -669,20 +674,10 @@ class Calendar(object):
                 label_y_pos = y_pos
                 font_size = app_height if app_height >= 3 else 0
 
-            # update existing one
-            if i < len(self.appointment_name_labels):
-                self.appointment_name_labels[i].set_text(app.appointment[0])
-                self.appointment_name_labels[i].set_center([label_x_pos, label_y_pos])
-                self.appointment_name_labels[i].set_font_size(floor(font_size))
-            # create new one
-            else:
-                self.appointment_name_labels.append(
-                    text.Text(self.canvas, app.appointment[0], [label_x_pos, label_y_pos], self.text_color, floor(font_size), anchor="nw")
-                )
-
             # shorten name if needed
-            if self.appointment_name_labels[i].font.measure((name := app.appointment[0]) + "...") > app_width - 20:
-                while self.appointment_name_labels[i].font.measure(name+ "...") > app_width - 20:
+            font = Font(family="HarmonyOS Sans SC", size=-floor(font_size))
+            if font.measure((name := app.appointment[0]) + "...") > app_width - 20:
+                while font.measure(name+ "...") > app_width - 20:
                     # shorten name
                     name = name[:-1]
 
@@ -690,12 +685,22 @@ class Calendar(object):
                     if len(name) == 0:
                         break
 
-                # set new name
-                self.appointment_name_labels[i].set_text(name + "...")
+                name += "..."
+
+            # update existing one
+            if i < len(self.appointment_name_labels):
+                self.appointment_name_labels[i].set_text(name)
+                self.appointment_name_labels[i].set_center([label_x_pos, label_y_pos])
+                self.appointment_name_labels[i].set_font_size(floor(font_size))
+            # create new one
+            else:
+                self.appointment_name_labels.append(
+                    text.Text(self.canvas, name, [label_x_pos, label_y_pos], self.text_color, floor(font_size), anchor="nw")
+                )
 
             background_counter += 1
 
-            # --- time label
+            # --- time label --- #
             # only show time if there is enough space
             if app_height > 38:
                 label_color = [color * 0.65 for color in app.color]
@@ -708,8 +713,9 @@ class Calendar(object):
                     name = f"{app.actual_time_frame[0].strftime('%d.%m.%Y %H:%M')} - {app.actual_time_frame[1].strftime('%d.%m.%Y %H:%M')}"
 
                 # shorten name if needed
-                if self.appointment_name_labels[i].font.measure(name + "...") > app_width - 20:
-                    while self.appointment_name_labels[i].font.measure(name + "...") > app_width - 20:
+                font = Font(family="HarmonyOS Sans SC", size=-10)
+                if font.measure(name + "...") > app_width - 20:
+                    while font.measure(name + "...") > app_width - 20:
                         # shorten name
                         name = name[:-1]
 

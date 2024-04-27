@@ -9,6 +9,8 @@
 104 => Update google Calendars
     "AC" -> append calendar from calendars that are being taken into consideration
     "RC" -> remove calendar from calendars that are being taken into consideration
+105 => Request credential token
+    - frontend message content: None -> requests to open Webserver
 
 --- 200 -> Todo_list Controls ---
 

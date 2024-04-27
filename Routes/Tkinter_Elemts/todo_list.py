@@ -77,17 +77,18 @@ class Todo_List(object):
 
     def set_active_todo(self, ids):
         # set active todo_
-        for _, block in self.todo_list_blocks.items():
-            if block.active_todo:
+        for key, block in self.todo_list_blocks.items():
+            if (ids is not None and block.active_todo and key != ids[0]) or ids is None:
                 block.active_todo_background.delete()
                 block.active_todo_label.delete()
                 block.active_todo = False
 
-        self.todo_list_blocks[ids[0]].set_active_todo(ids[1])
+        if ids is not None:
+            self.todo_list_blocks[ids[0]].set_active_todo(ids[1])
 
-        # update order
-        self.order.remove(ids[0])
-        self.order.insert(0, ids[0])
+            # update order
+            self.order.remove(ids[0])
+            self.order.insert(0, ids[0])
 
         # update
         self.update()
@@ -269,10 +270,9 @@ class Todo_List_Block(object):
         self.todos = todos
 
         # set active todo_at the top
-        if self.active_todo is not None:
-            for i, todo in enumerate(self.todos):
-                if todo[3] == self.active_todo:
-                    self.todos.insert(0, self.todos.pop(i))
+        for i, todo in enumerate(self.todos):
+            if todo[3] == self.active_todo:
+                self.todos.insert(0, self.todos.pop(i))
 
         self.update()
 
@@ -295,11 +295,11 @@ class Todo_List_Block(object):
         if not self.active_todo:
             self.active_todo_background.delete()
             self.active_todo_label.delete()
-
         # put active todo_at the beginning of the list
-        for i, todo in enumerate(self.todos):
-            if todo[3] == self.active_todo:
-                self.todos.insert(0, self.todos.pop(i))
+        else:
+            for i, todo in enumerate(self.todos):
+                if todo[3] == self.active_todo:
+                    self.todos.insert(0, self.todos.pop(i))
 
         # update
         self.update()

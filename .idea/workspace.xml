@@ -4,14 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="Time Craft V0.1">
-      <change afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/dropdown.py" afterDir="false" />
+    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="Time Craft V0.1.1 - genetic algorithm bug fixes, new logo and removal of setting pages">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/TimeCraft_Icon.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Routes/Tkinter_Elemts/entry.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/entry.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/sources.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/sources.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Integrations/google_calendar_integration.py" beforeDir="false" afterPath="$PROJECT_DIR$/Integrations/google_calendar_integration.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Integrations/notion_todo_list_integration.py" beforeDir="false" afterPath="$PROJECT_DIR$/Integrations/notion_todo_list_integration.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/Tkinter_Elemts/calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/calendar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/Tkinter_Elemts/todo_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/todo_list.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/integrations_calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/integrations_calendar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/calendar_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/calendar_data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend.py" beforeDir="false" afterPath="$PROJECT_DIR$/frontend.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/genetic.py" beforeDir="false" afterPath="$PROJECT_DIR$/genetic.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/TimeCraft.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/message code dictionary.txt" beforeDir="false" afterPath="$PROJECT_DIR$/message code dictionary.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,6 +66,7 @@
     &quot;Python.GUI.executor&quot;: &quot;Run&quot;,
     &quot;Python.Notion_Database.executor&quot;: &quot;Run&quot;,
     &quot;Python.Outlook_Calendar_Connection.executor&quot;: &quot;Run&quot;,
+    &quot;Python.TimeCraft.executor&quot;: &quot;Run&quot;,
     &quot;Python.backend.executor&quot;: &quot;Run&quot;,
     &quot;Python.calendar.executor&quot;: &quot;Run&quot;,
     &quot;Python.calendar_api (1).executor&quot;: &quot;Run&quot;,
@@ -87,7 +95,29 @@
       <recent name="D:\2. Programmieren\TimeCraft, an Adaptive Calendar\Routes" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python.TimeCraft">
+    <configuration name="TimeCraft" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="TimeCraft, an Adaptive Calendar" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="D:\2. Programmieren\TimeCraft, an Adaptive Calendar\TimeCraft.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="calendar" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="TimeCraft, an Adaptive Calendar" />
       <option name="ENV_FILES" value="" />
@@ -124,28 +154,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Routes/home.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="TimeCraft, an Adaptive Calendar" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -200,7 +208,7 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.main" />
+        <item itemvalue="Python.TimeCraft" />
         <item itemvalue="Python.test" />
         <item itemvalue="Python.home" />
         <item itemvalue="Python.calendar" />
@@ -256,7 +264,15 @@
       <option name="project" value="LOCAL" />
       <updated>1713863402243</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Time Craft V0.1.1 - genetic algorithm bug fixes, new logo and removal of setting pages">
+      <option name="closed" value="true" />
+      <created>1713882257664</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1713882257664</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -275,7 +291,8 @@
     <MESSAGE value="slightly update notion_api.py and integrated calendar_api.py" />
     <MESSAGE value="added genetic.py" />
     <MESSAGE value="Time Craft V0.1" />
-    <option name="LAST_COMMIT_MESSAGE" value="Time Craft V0.1" />
+    <MESSAGE value="Time Craft V0.1.1 - genetic algorithm bug fixes, new logo and removal of setting pages" />
+    <option name="LAST_COMMIT_MESSAGE" value="Time Craft V0.1.1 - genetic algorithm bug fixes, new logo and removal of setting pages" />
   </component>
   <component name="com.github.evgenys91.machinet.common.dslhistory.DslHistoryState">
     <option name="historyDtoById">

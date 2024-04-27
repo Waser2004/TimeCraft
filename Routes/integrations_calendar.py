@@ -1,6 +1,9 @@
-from Routes.Tkinter_Elemts import checkbox, entry, line, image, text
+from Routes.Tkinter_Elemts import checkbox, line, image, text, rectangle
 from tkinter import NW
+from datetime import datetime
 import logging
+import os
+import json
 
 from config import google_calendars
 
@@ -13,12 +16,26 @@ class Integrations_calendar(object):
         self.canvas = canvas
         self.win_size = window_size
 
+        self.draw_state = False
+
         # scrolling variable
         self.y_scroll = 0
 
         # create google Calendar block
         self.google_calendar_height = 125
         self.google_calendar_block = Google_Calendar_Block(self.frontend, self.canvas, self.win_size, self.set_google_calendar_height)
+
+        # notion secret button
+        self.google_login_background = rectangle.Rectangle(
+            self.canvas,
+            [self.win_size[0] - 50, self.win_size[1] - 50],
+            [self.win_size[0] - 10, self.win_size[1] - 10],
+            6,
+            [37, 41, 45],
+            0,
+            [41, 46, 50]
+        )
+        self.google_login_img = image.Tk_Image(self.canvas, [self.win_size[0] - 29, self.win_size[1] - 29], "Assets/Google_logo.png", anchor="center")
 
     # update y pos
     def update_y_pos(self):
@@ -40,12 +57,24 @@ class Integrations_calendar(object):
     # drawing/erasing functions
     # -------------------------
     def draw(self):
+        self.draw_state = True
+
         # google calendar block
         self.google_calendar_block.draw()
 
+        # draw button
+        self.google_login_background.draw()
+        self.google_login_img.draw()
+
     def delete(self):
+        self.draw_state = False
+
         # google calendar block
         self.google_calendar_block.delete()
+
+        # delete button
+        self.google_login_background.delete()
+        self.google_login_img.delete()
 
     # --------------------------------------
     # handle front and backend communication
@@ -68,6 +97,10 @@ class Integrations_calendar(object):
         # update y pos
         self.update_y_pos()
 
+        # update button
+        self.google_login_background.set_pos([self.win_size[0] - 50, self.win_size[1] - 50], [self.win_size[0] - 10, self.win_size[1] - 10])
+        self.google_login_img.set_center([self.win_size[0] - 29, self.win_size[1] - 29])
+
         # google calendar block
         self.google_calendar_block.resize(event)
 
@@ -75,6 +108,10 @@ class Integrations_calendar(object):
     def mouse_left_click(self, event):
         # google calendar block
         self.google_calendar_block.mouse_left_click(event)
+
+        # request token button pressed
+        if self.google_login_background.is_pressed(event.x, event.y):
+            self.dispatch_message(105, None)
 
     # right click
     def mouse_right_click(self, event):
@@ -99,6 +136,7 @@ class Integrations_calendar(object):
                 self.y_scroll = 0
 
             self.update_y_pos()
+
 
 ########################################################################################################################
 # google Calendar block

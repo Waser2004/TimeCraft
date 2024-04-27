@@ -2,6 +2,7 @@ import threading
 import copy
 import logging
 import time
+import webbrowser
 from datetime import datetime, timedelta
 
 from Integrations.google_calendar_integration import Google_Calendar_Integration
@@ -75,6 +76,37 @@ class Backend(object):
                     thread.join()
                     terminations.append(key)
 
+                    # handle successful google login
+                    if key == "request token":
+                        self.google_calendar_connection_status = True
+
+                        # send messages
+                        self.dispatch_message(101, [self.google_calendar_connection_status, self.google_calendar_statuses])
+
+                        # get calendar list
+                        if not "get calendar list" in self.threads:
+                            # get calendar list
+                            thread = threading.Thread(target=lambda: (self.get_calendar_list(), self.dispatch_message(102, self.calendar_list)), daemon=True)
+                            thread.start()
+
+                            # add thread to threads dict
+                            self.threads.update({"get calendar list": thread})
+
+                            # logging threads
+                            self.thread_logger.info(f"started:    [get calendar list] - currently {threading.active_count()} threads open")
+
+                        # send homepy appointments
+                        if not "send_homepy_appointments" in self.threads:
+                            # request to send appointments
+                            thread = threading.Thread(target=lambda: self.send_homepy_appointments(self.calendar_span), daemon=True)
+
+                            thread.start()
+                            self.threads.update({"send_homepy_appointments": thread})
+
+                            # logging threads
+                            self.thread_logger.info(
+                                f"started:    [send_homepy_appointments] - currently {threading.active_count()} threads open")
+
         # handle error when new thread is being added to threads dict while looping over it
         except RuntimeError:
             pass
@@ -84,7 +116,7 @@ class Backend(object):
             self.threads.pop(name)
 
         # --- update todo_lists and calendars --- #
-        if self.update_counter >= 60:
+        if self.update_counter >= 10:
             if not "send_homepy_todos" in self.threads:
                 # request to send appointments
                 thread = threading.Thread(target=self.send_homepy_todos, daemon=True)
@@ -121,8 +153,7 @@ class Backend(object):
             self.threads.update({"terminate frontend": thread})
 
             # logging threads
-            self.thread_logger.info(
-                f"started:    [terminate frontend] - currently {threading.active_count()} threads open")
+            self.thread_logger.info(f"started:    [terminate frontend] - currently {threading.active_count()} threads open")
 
         # --- keep backend loop running --- #
         self.loop_thread.append(threading.Timer(1, self.backend_loop))
@@ -166,6 +197,12 @@ class Backend(object):
     def get_todos(self):
         # log function
         self.func_logger.info("[backend] - get todos")
+
+        # check state of active todo_
+        if len(self.todo_calendar) > 0:
+            if self.todo_lists[list(self.todo_lists.keys())[0]].get_todo_status(self.todo_calendar[0][4]) == "Done":
+                todo = [None, None, None, self.todo_calendar[0][4]]
+                self.update_schedule_calendar_for_done_todo(todo)
 
         # get todos
         todos = {}
@@ -226,6 +263,7 @@ class Backend(object):
 
         # remove still ongoing todos from list
         if len(self.todo_calendar) > 0 and len(todos) > 0:
+            print(self.todo_calendar, todos)
             todos = [todo for todo in todos if not [left_todo[4] for left_todo in self.todo_calendar].count(todo[3])]
 
         # only schedule todos if there are todos to be scheduled
@@ -238,35 +276,54 @@ class Backend(object):
             self.dispatch_message(405, "evaluating best todo order...")
 
             # evaluate
-            if len(todos) > 0:
-                prev_cal_len = x if (x := len(self.todo_calendar) - 1) >= 0 else 0
-                self.todo_calendar += self.genetic_algorithm.evaluate(start_time)
+            prev_cal_len = x if (x := len(self.todo_calendar) - 1) >= 0 else 0
+            self.todo_calendar += self.genetic_algorithm.evaluate(start_time)
 
-                if "time till scheduled event ends" in self.threads:
-                    self.threads["time till scheduled event ends"].cancel()
-                    self.threads.pop("time till scheduled event ends")
+            # round todo_calendar datetimes
+            for i, app in enumerate(self.todo_calendar):
+                self.todo_calendar[i][1] = (app[1] + timedelta(seconds=59)).replace(second=0, microsecond=0)
+                self.todo_calendar[i][2] = (app[2] + timedelta(seconds=59)).replace(second=0, microsecond=0)
 
-                    # logging threads
-                    self.thread_logger.info(f"canceled:   [time till scheduled event ends] -> due to scheduling events - currently {threading.active_count()} threads open")
-
-                # create thread that executes before appointment ist done
-                thread = threading.Timer((self.todo_calendar[prev_cal_len][2] - datetime.now()).total_seconds(), self.update_schedule_calendar_at_event_end)
-                thread.start()
-
-                self.threads.update({"time till scheduled event ends": thread})
+            # create thread to reschedule events at the end of the first appointment end
+            if "time till scheduled event ends" in self.threads:
+                self.threads["time till scheduled event ends"].cancel()
+                self.threads.pop("time till scheduled event ends")
 
                 # logging threads
-                self.thread_logger.info(f"started:    [time till scheduled event ends] - currently {threading.active_count()} threads open")
+                self.thread_logger.info(f"canceled:   [time till scheduled event ends] -> due to scheduling events - currently {threading.active_count()} threads open")
 
-                # get first appointment id
-                for i, (key, todo_list) in enumerate(todo_lists.items()):
-                    if [todo[3] for todo in todo_list].count(self.todo_calendar[0][4]):
-                        # set ids
-                        ids = [key, self.todo_calendar[0][4]]
+            # create thread that executes before appointment ist done
+            thread = threading.Timer((self.todo_calendar[prev_cal_len][2] - datetime.now()).total_seconds(), self.update_schedule_calendar_at_event_end)
+            thread.start()
 
+            self.threads.update({"time till scheduled event ends": thread})
+
+            # logging threads
+            self.thread_logger.info(f"started:    [time till scheduled event ends] - currently {threading.active_count()} threads open")
+
+            # get first appointment id
+            for i, (key, todo_list) in enumerate(todo_lists.items()):
+                if [todo[3] for todo in todo_list].count(self.todo_calendar[0][4]):
+                    # set ids
+                    ids = [key, self.todo_calendar[0][4]]
+
+                    # only set todo_to active if it is starting or has started already
+                    if self.todo_calendar[0][1] <= datetime.now():
                         # send message
                         self.dispatch_message(404, ids)
-                        break
+
+                    # set time for active todo_
+                    else:
+                        # create timer
+                        thread = threading.Timer((self.todo_calendar[0][1] - datetime.now()).total_seconds(), lambda: self.dispatch_message(404, ids))
+                        thread.start()
+
+                        self.threads.update({"set active todo": thread})
+
+                        # logging threads
+                        self.thread_logger.info(f"started:    [set active todo] - currently {threading.active_count()} threads open")
+
+                    break
 
         # send message that todos are scheduled
         self.dispatch_message(402, {"done todos": self.done_todo_calendar})
@@ -335,18 +392,21 @@ class Backend(object):
         self.schedule_todos(schedule_start)
 
     def update_schedule_calendar_for_done_todo(self, todo):
+        print(todo)
         # log function
         self.func_logger.info(f"[backend] - update schedule calendar for done todo -> {todo}")
 
         # put active todo_event to done todos
         if todo[3] == self.todo_calendar[0][4]:
-
             while len(self.todo_calendar) > 0:
                 if todo[3] == self.todo_calendar[0][4]:
                     self.done_todo_calendar.append(self.todo_calendar.pop(0))
                 else:
                     self.done_todo_calendar[-1][2] = datetime.now()
                     break
+
+            # set no todo_appointment to be active
+            self.dispatch_message(404, None)
 
         # cancel update schedule calendar at event end thread
         if "time till scheduled event ends" in self.threads:
@@ -419,6 +479,20 @@ class Backend(object):
             # "RC" -> remove calendar from calendars that are being taken into consideration
             elif message[0] == "RC":
                 self.google_calendars.pop(list(message[1].keys())[0])
+
+        # 105 => Request credential token
+        elif message_code == 105:
+            if not self.google_calendar_integration.requesting_token:
+                # request token via thread
+                thread = threading.Thread(target=self.google_calendar_integration.request_token, daemon=True)
+                thread.start()
+
+                self.threads.update({"request token": thread})
+
+                # logging threads
+                self.thread_logger.info(f"started:    [send_homepy_appointments] - currently {threading.active_count()} threads open")
+            else:
+                webbrowser.open(self.google_calendar_integration.flow.authorization_url(prompt='consent')[0])
 
         # --- 200 -> Todo_list Controls --- #
         # 201 => Update notion integration secret
@@ -678,15 +752,16 @@ class Backend(object):
         # log function
         self.func_logger.info("[backend] - connect to integrations")
 
-        try:
-            # create google calendar integration
-            self.google_calendar_integration = Google_Calendar_Integration(self.dispatch_message)
+        # create google calendar integration
+        self.google_calendar_integration = Google_Calendar_Integration(self.dispatch_message)
 
-            # successful integration
-            self.google_calendar_connection_status = True
-        except:
-            # error
+        # create token request button if it does not exist
+        if self.google_calendar_integration.creds is None:
             self.google_calendar_connection_status = False
+
+        # valid creds are existing
+        else:
+            self.google_calendar_connection_status = True
 
         # establish Notion Todo_list integration
         for key, todo_list in self.notion_todo_lists.items():
@@ -709,7 +784,6 @@ class Backend(object):
             todos += todo_list
 
         # filter todo_calendar
-        todo_ids = [todo[3] for todo in todos]
         todo_calendar = [todo for todo in todo_calendar if todo[1] < datetime.now()]
 
         for todo in todo_calendar:
@@ -735,6 +809,20 @@ class Backend(object):
 
             # logging threads
             self.thread_logger.info(f"started:    [time till scheduled event ends] - currently {threading.active_count()} threads open")
+
+            # set todo_to active
+            todo_lists = self.get_todos()
+
+            # get first appointment id
+            for i, (key, todo_list) in enumerate(todo_lists.items()):
+                if [todo[3] for todo in todo_list].count(self.todo_calendar[0][4]):
+                    # set ids
+                    ids = [key, self.todo_calendar[0][4]]
+
+                    # send message
+                    self.dispatch_message(404, ids)
+
+                    break
 
         # send message to homepy
         self.dispatch_message(402, {"done todos": self.done_todo_calendar, "scheduled todos": self.todo_calendar})

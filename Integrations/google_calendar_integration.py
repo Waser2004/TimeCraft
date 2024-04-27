@@ -1,13 +1,11 @@
 import os.path
 import datetime
-import threading
 import time
 
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 
 class Google_Calendar_Integration(object):
     SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
@@ -16,34 +14,49 @@ class Google_Calendar_Integration(object):
 
         # connect to calendar
         self.get_credentials()
-        self.service = build("calendar", "v3", credentials=self.creds)
+        try:
+            self.service = build("calendar", "v3", credentials=self.creds)
+        except:
+            self.service = None
+
+        self.flow = None
 
         # requesting state
         self.requesting = False
+        self.requesting_token = False
 
     def set_frontend_connection(self, frontend_connection):
         self.dispatch_message = frontend_connection
 
     def get_credentials(self):
-        request_token = False
         # get credentials from file
         if os.path.exists("Integrations/Google_API_Config/token.json"):
             self.creds = Credentials.from_authorized_user_file("Integrations/Google_API_Config/token.json", self.SCOPES)
 
-        # ger permission for credentials
+            # if the creds are expired refresh them
+            if not self.creds.expired:
+                self.creds.refresh(Request())
         else:
-            request_token = True
+            self.creds = None
 
-        if request_token:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                "Integrations/Google_API_Config/credentials.json", self.SCOPES,
-            )
-            # create thread for opening the browser
-            self.creds = flow.run_local_server(port=0)
+    # create token via login page
+    def request_token(self):
+        # set requesting state to true
+        self.requesting_token = True
 
-            # Save the credentials for the next run
-            with open("Integrations/Google_API_Config/token.json", "w") as token:
-                token.write(self.creds.to_json())
+        self.flow = InstalledAppFlow.from_client_secrets_file(
+            "Integrations/Google_API_Config/credentials.json", self.SCOPES,
+        )
+        # create thread for opening the browser
+        self.creds = self.flow.run_local_server(port=0)
+        self.service = build("calendar", "v3", credentials=self.creds)
+
+        # Save the credentials for the next run
+        with open("Integrations/Google_API_Config/token.json", "w") as token:
+            token.write(self.creds.to_json())
+
+        # set requesting state to false, no longer requesting information
+        self.requesting_token = False
 
     def get_appointments(self, calendar_id, timespan: [datetime.datetime, datetime.datetime]):
         # set requesting state to true
@@ -90,11 +103,15 @@ class Google_Calendar_Integration(object):
                     ])
 
         # error while retrieving data
-        except HttpError as error:
-            print(f"An error occurred: {error}")
+        except Exception as error:
+            # set requesting state to false, no longer requesting information
+            self.requesting = False
+
+            raise Exception(f"Connection to the Calendar failed with the error: {error}")
 
         # set requesting state to false, no longer requesting information
         self.requesting = False
+
 
         return appointments
 
@@ -102,13 +119,16 @@ class Google_Calendar_Integration(object):
         # set requesting state to true
         self.requesting = True
 
-        # Get a list of calendars
-        calendar_list = self.service.calendarList().list().execute()
+        try:
+            # Get a list of calendars
+            calendar_list = self.service.calendarList().list().execute()
 
-        # convert calendar information
-        calendars = {}
-        for calendar_list_entry in calendar_list['items']:
-            calendars.update({calendar_list_entry['summary']: calendar_list_entry['id']})
+            # convert calendar information
+            calendars = {}
+            for calendar_list_entry in calendar_list['items']:
+                calendars.update({calendar_list_entry['summary']: calendar_list_entry['id']})
+        except:
+            calendars = {}
 
         # set requesting state to false, no longer requesting information
         self.requesting = False

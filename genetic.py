@@ -230,7 +230,7 @@ class Genetic_Algorithm(object):
     #    appointments.reverse()
 #
     #    existing_appointments = []
-    #    now = datetime.datetime.now()
+    #    now = datetime.now()
 #
     #    # Iterate through each item in the Calendar folder
     #    for item in appointments:

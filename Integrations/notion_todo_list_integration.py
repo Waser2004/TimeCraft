@@ -32,39 +32,47 @@ class Notion_Todo_List_Integration(object):
         # set requesting state to true, and start your request
         self.requesting = True
 
-        self.open_tasks.clear()
+        try:
+            self.open_tasks.clear()
 
-        # filter to only retrieve open tasks
-        filter_object = {
-            "or":
-                [
-                    {
-                        "property": "status",
-                        "select": {"equals": "Not started"}
-                    },
-                    {
-                        "property": "status",
-                        "select": {"equals": "In progress"}
-                    }
-                ]
-        }
+            # filter to only retrieve open tasks
+            filter_object = {
+                "or":
+                    [
+                        {
+                            "property": "status",
+                            "select": {"equals": "Not started"}
+                        },
+                        {
+                            "property": "status",
+                            "select": {"equals": "In progress"}
+                        }
+                    ]
+            }
 
-        # get database entry's (task's)
-        url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
+            # get database entry's (task's)
+            url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
 
-        payload = {"page_size": self.max_task_amount, "filter": filter_object}
-        response = requests.post(url, json=payload, headers=self.headers)
+            payload = {"page_size": self.max_task_amount, "filter": filter_object}
+            response = requests.post(url, json=payload, headers=self.headers)
 
-        self.json = response.json()
+            self.json = response.json()
 
-        # extract important data
-        for task in self.json["results"]:
-            self.open_tasks.append([
-                task["properties"]["title"]["title"][0]["text"]["content"],   # retrieve title
-                task["properties"]["est. time"]["number"],                    # retrieve estimated time
-                task["properties"]["priority"]["number"],                     # retrieve priority
-                task["id"]                                                    # retrieve task id
-            ])
+            # extract important data
+            for task in self.json["results"]:
+                self.open_tasks.append([
+                    task["properties"]["title"]["title"][0]["text"]["content"],   # retrieve title
+                    task["properties"]["est. time"]["number"],                    # retrieve estimated time
+                    task["properties"]["priority"]["number"],                     # retrieve priority
+                    task["id"]                                                    # retrieve task id
+                ])
+
+        except:
+            # set requesting state to false, request complete
+            self.requesting = False
+
+            raise Exception("Could not connect to the Notion database, check if the Notion integration "
+                            "secret and the database key are both correct")
 
         # set requesting state to false, request complete
         self.requesting = False

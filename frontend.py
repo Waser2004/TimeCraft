@@ -11,12 +11,13 @@ class GUI():
     func_logger = logging.getLogger("func_log")
 
     def __init__(self):
-        self.win_size = [960, 540]
+        self.win_size = [1040, 585]
         self.dispatch_message = None
 
         # set up window
         self.root = tk.Tk()
         self.root.geometry(f"{self.win_size[0]}x{self.win_size[1]}")
+        self.root.minsize(self.win_size[0], self.win_size[1])
         ico = Image.open('Assets/TimeCraft_logo.png')
         photo = ImageTk.PhotoImage(ico)
         self.root.wm_iconphoto(False, photo)
@@ -82,6 +83,11 @@ class GUI():
         elif route == "Settings":
             self.current_route = "Settings-integrations"
 
+        # request appointments and todos if new route is Home
+        if route =="Home":
+            self.dispatch_message(401, None)
+            self.dispatch_message(402, None)
+
         # draw new route
         self.routes[self.current_route].draw()
 
@@ -140,6 +146,10 @@ class GUI():
             # "RC" -> remove calendar from calendars that are being taken into consideration
             elif message[0] == "RC":
                 pass
+
+        # 105 => Request credential token
+        if message_code == 105:
+            pass
 
         # --- 200 -> Todo_list Controls --- #
         # 201 => Update notion integration secret
