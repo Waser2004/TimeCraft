@@ -178,7 +178,7 @@ class Backend(object):
                 while True:
                     # execute function if the integration is ot requesting anything right now
                     if not self.google_calendar_integration.requesting:
-                        appointments.update({calendar: copy.deepcopy(self.google_calendar_integration.get_appointments(key, time_span)) + [["Test", datetime(2024, 5, 1, 19, 26), datetime(2024, 5, 1, 19, 35), "at Home"]]})
+                        appointments.update({calendar: copy.deepcopy(self.google_calendar_integration.get_appointments(key, time_span))})
                         break
                     # wait for the integration to be done requesting
                     else:
