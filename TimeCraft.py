@@ -16,7 +16,7 @@ import threading
 from frontend import GUI
 from backend import Backend
 
-from config import google_calendars, notion_todo_lists, notion_todo_lists_hidden, notion_integration_secret
+from data_loader import google_calendars, notion_todo_lists, notion_todo_lists_hidden, notion_integration_secret
 
 # -----------------------------------
 # create logger

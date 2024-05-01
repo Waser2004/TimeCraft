@@ -1,3 +1,4 @@
+import json
 import threading
 import copy
 import logging
@@ -9,7 +10,7 @@ from Integrations.google_calendar_integration import Google_Calendar_Integration
 from Integrations.notion_todo_list_integration import Notion_Todo_List_Integration
 from genetic import Genetic_Algorithm
 
-from calendar_data import todos_calendar, done_todos_calendar
+from data_loader import todos_calendar, done_todos_calendar
 
 class Backend(object):
     # create loggers
@@ -104,8 +105,7 @@ class Backend(object):
                             self.threads.update({"send_homepy_appointments": thread})
 
                             # logging threads
-                            self.thread_logger.info(
-                                f"started:    [send_homepy_appointments] - currently {threading.active_count()} threads open")
+                            self.thread_logger.info(f"started:    [send_homepy_appointments] - currently {threading.active_count()} threads open")
 
         # handle error when new thread is being added to threads dict while looping over it
         except RuntimeError:
@@ -116,7 +116,7 @@ class Backend(object):
             self.threads.pop(name)
 
         # --- update todo_lists and calendars --- #
-        if self.update_counter >= 10:
+        if self.update_counter >= 60:
             if not "send_homepy_todos" in self.threads:
                 # request to send appointments
                 thread = threading.Thread(target=self.send_homepy_todos, daemon=True)
@@ -178,7 +178,7 @@ class Backend(object):
                 while True:
                     # execute function if the integration is ot requesting anything right now
                     if not self.google_calendar_integration.requesting:
-                        appointments.update({calendar: copy.deepcopy(self.google_calendar_integration.get_appointments(key, time_span))})
+                        appointments.update({calendar: copy.deepcopy(self.google_calendar_integration.get_appointments(key, time_span)) + [["Test", datetime(2024, 5, 1, 19, 26), datetime(2024, 5, 1, 19, 35), "at Home"]]})
                         break
                     # wait for the integration to be done requesting
                     else:
@@ -198,40 +198,58 @@ class Backend(object):
         # log function
         self.func_logger.info("[backend] - get todos")
 
-        # check state of active todo_
-        if len(self.todo_calendar) > 0:
-            if self.todo_lists[list(self.todo_lists.keys())[0]].get_todo_status(self.todo_calendar[0][4]) == "Done":
-                todo = [None, None, None, self.todo_calendar[0][4]]
-                self.update_schedule_calendar_for_done_todo(todo)
+        while True:
+            # try getting todos and look aut for RunTime errors caused by dictionary changes while looping
+            try:
+                # get todos
+                todos = {}
+                self.todo_list_status.clear()
+                for (name, todo_list), hidden in zip(self.todo_lists.items(), self.notion_todo_lists_hidden.values()):
+                    if not hidden:
+                        # successfully got todos
+                        try:
+                            while True:
+                                # execute function if the integration is ot requesting anything right now
+                                if not todo_list.requesting:
+                                    todos.update({name: todo_list.get_open_tasks()})
+                                    break
+                                # wait for the integration to be done requesting
+                                else:
+                                    time.sleep(0.3)
 
-        # get todos
-        todos = {}
-        self.todo_list_status.clear()
-        for (name, todo_list), hidden in zip(self.todo_lists.items(), self.notion_todo_lists_hidden.values()):
-            if not hidden:
-                # successfully got todos
-                try:
-                    while True:
-                        # execute function if the integration is ot requesting anything right now
-                        if not todo_list.requesting:
-                            todos.update({name: todo_list.get_open_tasks()})
-                            break
-                        # wait for the integration to be done requesting
-                        else:
-                            time.sleep(0.3)
+                            self.todo_list_status.append(True)
+                        # error while trying to get todos
+                        except:
+                            self.todo_list_status.append(False)
 
-                    self.todo_list_status.append(True)
-                # error while trying to get todos
-                except:
-                    self.todo_list_status.append(False)
+                    else:
+                        self.todo_list_status.append(True)
 
-            else:
-                self.todo_list_status.append(True)
+                break
+            # wait half a second if dictionary size has been changed and continue on then
+            except RuntimeError:
+                time.sleep(0.5)
 
         # remove hidden todos if in the meantime the hidden values have changed
         for key, value in self.notion_todo_lists_hidden.items():
             if value and key in todos:
                 todos.pop(key)
+
+        # check state of active todo_
+        for todo in self.todo_calendar:
+            if self.todo_lists[list(self.todo_lists.keys())[0]].get_todo_status(todo[4]) == "Done":
+                todo = [todo[0], None, None, todo[4]]
+
+                # create thread to for updating schedule
+                thread = threading.Thread(target=lambda : self.update_schedule_calendar_for_done_todo(todo), daemon=True)
+                thread.start()
+
+                self.threads.update({f"schedule todos for done todo {todo[0]}": thread})
+
+                # logging threads
+                self.thread_logger.info(f"started:    [schedule todos for done todo {todo[0]}] - currently {threading.active_count()} threads open")
+
+                break
 
         # update statuses
         self.dispatch_message(202, self.todo_list_status)
@@ -263,7 +281,6 @@ class Backend(object):
 
         # remove still ongoing todos from list
         if len(self.todo_calendar) > 0 and len(todos) > 0:
-            print(self.todo_calendar, todos)
             todos = [todo for todo in todos if not [left_todo[4] for left_todo in self.todo_calendar].count(todo[3])]
 
         # only schedule todos if there are todos to be scheduled
@@ -281,8 +298,8 @@ class Backend(object):
 
             # round todo_calendar datetimes
             for i, app in enumerate(self.todo_calendar):
-                self.todo_calendar[i][1] = (app[1] + timedelta(seconds=59)).replace(second=0, microsecond=0)
-                self.todo_calendar[i][2] = (app[2] + timedelta(seconds=59)).replace(second=0, microsecond=0)
+                self.todo_calendar[i][1] = app[1].replace(second=0, microsecond=0)
+                self.todo_calendar[i][2] = app[2].replace(second=0, microsecond=0)
 
             # create thread to reschedule events at the end of the first appointment end
             if "time till scheduled event ends" in self.threads:
@@ -308,7 +325,7 @@ class Backend(object):
                     ids = [key, self.todo_calendar[0][4]]
 
                     # only set todo_to active if it is starting or has started already
-                    if self.todo_calendar[0][1] <= datetime.now():
+                    if self.todo_calendar[0][1] <= datetime.now().replace(second=0, microsecond=0):
                         # send message
                         self.dispatch_message(404, ids)
 
@@ -392,34 +409,44 @@ class Backend(object):
         self.schedule_todos(schedule_start)
 
     def update_schedule_calendar_for_done_todo(self, todo):
-        print(todo)
         # log function
         self.func_logger.info(f"[backend] - update schedule calendar for done todo -> {todo}")
 
         # put active todo_event to done todos
         if todo[3] == self.todo_calendar[0][4]:
-            while len(self.todo_calendar) > 0:
-                if todo[3] == self.todo_calendar[0][4]:
-                    self.done_todo_calendar.append(self.todo_calendar.pop(0))
-                else:
-                    self.done_todo_calendar[-1][2] = datetime.now()
-                    break
+            app_amount = [todo_app[4] for todo_app in self.todo_calendar].count(todo[3])
+
+            if (now := datetime.now()) > self.todo_calendar[app_amount - 1][1]:
+                self.todo_calendar[app_amount - 1][2] = now
+
+            for i in range(app_amount):
+                self.done_todo_calendar.append(self.todo_calendar.pop(0))
+
+            # update calendars
+            self.dispatch_message(402, {"done todos": self.done_todo_calendar})
+            self.dispatch_message(402, {"scheduled todos": self.todo_calendar})
+
+            # update calendar
+            self.todo_calendar.clear()
+
+            # calculate schedule start time
+            schedule_start = datetime.now() + timedelta(minutes=5)
+
+            # cancel update schedule calendar at event end thread
+            if "time till scheduled event ends" in self.threads:
+                self.threads["time till scheduled event ends"].cancel()
+
+                # logging threads
+                self.thread_logger.info(f"canceled:   [time till scheduled event ends] -> due to done todo - currently {threading.active_count()} threads open")
 
             # set no todo_appointment to be active
             self.dispatch_message(404, None)
+        # for None active todo_just remove them from the todo_calendar
+        else:
+            self.todo_calendar = [todo_app for todo_app in self.todo_calendar if todo_app[4] == self.todo_calendar[0][4]]
 
-        # cancel update schedule calendar at event end thread
-        if "time till scheduled event ends" in self.threads:
-            self.threads["time till scheduled event ends"].cancel()
-
-            # logging threads
-            self.thread_logger.info(f"canceled:   [time till scheduled event ends] -> due to done todo - currently {threading.active_count()} threads open")
-
-        # update calendar
-        self.todo_calendar.clear()
-
-        # calculate schedule start time
-        schedule_start = datetime.now() + timedelta(minutes=5)
+            # calculate schedule start time
+            schedule_start = self.todo_calendar[-1][2] + timedelta(minutes=5)
 
         # schedule todos
         self.genetic_algorithm.tasks.clear()
@@ -595,6 +622,8 @@ class Backend(object):
                 # remove todo_list
                 self.todo_lists.pop(message[1])
                 self.notion_todo_lists_hidden.pop(message[1])
+
+                self.dispatch_message(204, ["RT", message[1]])
 
         # 205 => Update Notion tod_list hidden settings
         elif message_code == 205:
@@ -786,7 +815,7 @@ class Backend(object):
         # filter todo_calendar
         todo_calendar = [todo for todo in todo_calendar if todo[1] < datetime.now()]
 
-        for todo in todo_calendar:
+        for todo in todo_calendar[:]:
             # todo_has been set done
             if "Done" == list(self.todo_lists.values())[0].get_todo_status(todo[4]):
                 done_todo_calendar.append(todo)
@@ -834,25 +863,28 @@ class Backend(object):
         # log function
         self.func_logger.info("[backend] - save config.py")
 
-        # write config
-        with open('config.py', 'w') as file:
+        # config object
+        config = {
+            "google_calendars": self.google_calendars,
+            "notion_integration_secret": self.notion_integration_secret,
+            "notion_todo_lists": {key: value.database_id for key, value in self.todo_lists.items()},
+            "notion_todo_lists_hidden": self.notion_todo_lists_hidden
+        }
 
-            file.write(f"# Calendar data\n")
-            file.write(f"google_calendars = {self.google_calendars}\n")
+        # dump json
+        with open("Data/config.json", "w") as config_json:
+            json.dump(config, config_json)
 
-            file.write("\n# Todolist data\n")
-            file.write(f"notion_integration_secret = '{self.notion_integration_secret}'\n")
-            todo_lists = {key: value.database_id for key, value in self.todo_lists.items()}
-            file.write(f"notion_todo_lists = {todo_lists}\n")
+        # turn datetime to string for json
+        clean_todo_calendar = [[app[0], app[1].isoformat(), app[2].isoformat(), app[3], app[4]] for app in self.todo_calendar]
+        clean_done_todo_calendar = [[app[0], app[1].isoformat(), app[2].isoformat(), app[3], app[4]] for app in self.done_todo_calendar]
 
-            file.write("\n# hidden state for todolist blocks\n")
-            file.write(f"notion_todo_lists_hidden = {self.notion_todo_lists_hidden}\n")
+        # calendar data object
+        calendar_data = {
+            "todos_calendar": clean_todo_calendar,
+            "done_todos_calendar": clean_done_todo_calendar
+        }
 
-        # write calendar data
-        with open('calendar_data.py', 'w', encoding='utf-8') as file:
-            file.write(f"import datetime\n\n")
-            file.write(f"# appointments of open todos\n")
-            file.write(f"todos_calendar = {self.todo_calendar}\n")
-
-            file.write("\n# appointments of done todos\n")
-            file.write(f"done_todos_calendar = {self.done_todo_calendar}\n")
+        # dump json
+        with open("Data/calendar_data.json", "w") as calendar_data_json:
+            json.dump(calendar_data, calendar_data_json)

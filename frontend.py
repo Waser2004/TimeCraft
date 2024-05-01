@@ -184,7 +184,7 @@ class GUI():
                 self.routes["Home"].todo_list_vis.update_todo_list_name(message[1], message[2])
             # "RT" -> remove todo_list from list
             elif message[0] == "RT":
-                pass
+                 self.routes["Home"].todo_list_vis.remove_todo_list(message[1])
 
         # 205 => Update Notion tod_list hidden settings
         elif message_code == 205:
@@ -228,15 +228,6 @@ class GUI():
                     self.canvas.tag_raise(self.routes["Home"].bottom_blocker.object)
                     self.canvas.tag_raise(self.routes["Home"].schedule_todos.object)
                     self.canvas.tag_raise(self.routes["Home"].schedule_todos_label.object)
-
-            # delete all todo_lists that are no longer active
-            to_remove_lists = []
-            for key in self.routes["Home"].todo_list_vis.todo_list_blocks.keys():
-                if key not in message:
-                    to_remove_lists.append(key)
-
-            for key in to_remove_lists:
-                self.routes["Home"].todo_list_vis.remove_todo_list(key)
 
             self.routes["Home"].requesting_todos = False
 

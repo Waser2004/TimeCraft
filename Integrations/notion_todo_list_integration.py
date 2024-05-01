@@ -1,3 +1,5 @@
+import copy
+
 import requests
 
 class Notion_Todo_List_Integration(object):
@@ -31,10 +33,9 @@ class Notion_Todo_List_Integration(object):
     def get_open_tasks(self):
         # set requesting state to true, and start your request
         self.requesting = True
+        open_tasks = []
 
         try:
-            self.open_tasks.clear()
-
             # filter to only retrieve open tasks
             filter_object = {
                 "or":
@@ -60,7 +61,7 @@ class Notion_Todo_List_Integration(object):
 
             # extract important data
             for task in self.json["results"]:
-                self.open_tasks.append([
+                open_tasks.append([
                     task["properties"]["title"]["title"][0]["text"]["content"],   # retrieve title
                     task["properties"]["est. time"]["number"],                    # retrieve estimated time
                     task["properties"]["priority"]["number"],                     # retrieve priority
@@ -74,10 +75,12 @@ class Notion_Todo_List_Integration(object):
             raise Exception("Could not connect to the Notion database, check if the Notion integration "
                             "secret and the database key are both correct")
 
+        self.open_tasks = copy.deepcopy(open_tasks)
+
         # set requesting state to false, request complete
         self.requesting = False
 
-        return self.open_tasks
+        return open_tasks
 
     def get_todo_status(self, todo_id):
         # get database page

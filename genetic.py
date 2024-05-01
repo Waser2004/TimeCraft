@@ -40,7 +40,7 @@ class Genetic_Algorithm(object):
             self.evaluation_mode = "forward"
         # create 1'000 random gens
         else:
-            self.gens = [random.sample(range(len(self.tasks)), len(self.tasks)) for _ in range(300)]
+            self.gens = [random.sample(range(len(self.tasks)), len(self.tasks)) for _ in range(50)]
             self.evaluation_mode = "genetic"
 
     def add_appointments(self, appointments):
@@ -84,15 +84,15 @@ class Genetic_Algorithm(object):
                 ranked_gens = [(self.fitness(gen, start_time), gen) for gen in self.gens]
                 ranked_gens.sort()
 
-                # best 100 ranked gens
-                best_gens = [gen[1] for gen in ranked_gens[:30]]
+                # best 25 ranked gens
+                best_gens = [gen[1] for gen in ranked_gens[:25]]
 
                 # keep best solution
                 self.gens.clear()
                 self.gens.append(best_gens[0])
 
                 # create new gen
-                for _ in range(299):
+                for _ in range(49):
                     # get random gen index and random seperator index for gen cutting
                     gen_i = random.choice(list(range(len(best_gens))))
                     seperator = random.randint(0, len(best_gens[0]))
@@ -146,8 +146,11 @@ class Genetic_Algorithm(object):
         # sort tasks based on given example
         sorted_tasks = [self.tasks[i] for i in example]
 
+        # merge appointments together
+        appointments = self.merge_appointments(deepcopy(self.appointments))
+
         # calculate the start and end time of each task for this order
-        timed_tasks = self.calculate_task_times(sorted_tasks, deepcopy(self.appointments), start_time)
+        timed_tasks = self.calculate_task_times(sorted_tasks, appointments, start_time)
 
         # evaluate task score
         seconds_to_event_start = [(task[1] - start_time).total_seconds() for task in timed_tasks]
@@ -216,6 +219,24 @@ class Genetic_Algorithm(object):
                         appointments.remove(appointment)
 
         return timed_tasks
+
+    # Adapted from ChatGPT
+    # Original code: https://chat.openai.com/share/1c705bc9-eec2-4900-9a24-7be6a44fa435
+    # Accessed/Copied on: 29.04.2024
+    @staticmethod
+    def merge_appointments(appointments):
+        appointments = sorted(appointments, key=lambda x : x[1])
+        merged_appointments = []
+
+        for i, app in enumerate(appointments):
+            # overlapping appointments merge them
+            if len(merged_appointments) > 0 and app[1] < merged_appointments[-1][2]:
+                merged_appointments[-1][2] = max(app[2], merged_appointments[-1][2])
+            # no overlap, add appointment to merge list
+            else:
+                merged_appointments.append(app)
+
+        return merged_appointments
 
     # -------------------------------
     # add scheduled todos to calendar

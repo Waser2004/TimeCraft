@@ -5,7 +5,7 @@ import logging
 import os
 import json
 
-from config import google_calendars
+from data_loader import google_calendars
 
 class Integrations_calendar(object):
     func_logger = logging.getLogger("func_log")
@@ -341,7 +341,7 @@ class Google_Calendar_Block(object):
                 # remove calendar to calendar list in the backend
                 else:
                     message = {self.calendar_labels[i].text: self.calendars[self.calendar_labels[i].text]}
-                    self.frontend.routes["Home"].calendar_vis.remove_calendar(f"google calendar: {self.calendar_labels[i].text}")
+                    self.frontend.routes["Home"].calendar_vis.remove_calendar(self.calendar_labels[i].text)
 
                     self.dispatch_message(104, ["RC", message])
 

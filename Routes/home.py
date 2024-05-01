@@ -3,6 +3,8 @@ from math import ceil, floor
 from datetime import date, datetime, timedelta, time
 import logging
 
+from data_loader import notion_todo_lists
+
 class Home(object):
     func_logger = logging.getLogger("func_log")
     def __init__(self, frontend, canvas, window_size):
@@ -40,6 +42,10 @@ class Home(object):
             self.canvas, "Schedule Todos",
             [(self.win_size[0] - 300) / 2 + 300, self.win_size[1] - 40], [255, 255, 255], 13
         )
+
+        # add todo_lists
+        for key in notion_todo_lists.keys():
+            self.todo_list_vis.add_todo_list(key, [])
 
         self.draw_status = False
 

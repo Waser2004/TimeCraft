@@ -63,11 +63,13 @@ class Todo_List(object):
         self.update()
 
     def update_todo_list_name(self, old_name, new_name):
-        self.todo_list_blocks.update({new_name: self.todo_list_blocks.pop(old_name)})
-        self.todo_list_blocks[new_name].todo_list_title.set_text(new_name)
-        self.todo_list_blocks[new_name].todo_list_name = new_name
+        # update todolist name only if old name exists
+        if old_name in self.todo_list_blocks:
+            self.todo_list_blocks.update({new_name: self.todo_list_blocks.pop(old_name)})
+            self.todo_list_blocks[new_name].todo_list_title.set_text(new_name)
+            self.todo_list_blocks[new_name].todo_list_name = new_name
 
-        self.order = [key if key != old_name else new_name for key in self.order]
+            self.order = [key if key != old_name else new_name for key in self.order]
 
         self.update()
 
@@ -83,12 +85,16 @@ class Todo_List(object):
                 block.active_todo_label.delete()
                 block.active_todo = False
 
-        if ids is not None:
-            self.todo_list_blocks[ids[0]].set_active_todo(ids[1])
+        try:
+            if ids is not None:
+                self.todo_list_blocks[ids[0]].set_active_todo(ids[1])
 
-            # update order
-            self.order.remove(ids[0])
-            self.order.insert(0, ids[0])
+                # update order
+                self.order.remove(ids[0])
+                self.order.insert(0, ids[0])
+        # Todo_list does no longer exist, just do not draw active sign
+        except:
+            pass
 
         # update
         self.update()
@@ -256,7 +262,7 @@ class Todo_List_Block(object):
 
             # create active indicator
             if self.active_todo == todo[3]:
-                x_offset = self.todo_blocks[i][1].text.font.measure(todo[0]) + 55
+                x_offset = self.todo_blocks[i][1].text.font.measure(self.todo_blocks[i][1].text.text) + 55
 
                 self.active_todo_background.set_pos([x_pos + x_offset, y_pos + 2], [x_pos + x_offset + 36, y_pos + 14])
                 self.active_todo_label.set_center([x_pos + x_offset + 5, y_pos + 2])

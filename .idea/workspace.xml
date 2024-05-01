@@ -4,21 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="Time Craft V0.1.1 - genetic algorithm bug fixes, new logo and removal of setting pages">
+    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="Time Craft V0.2 - Improved Google login flow, fixed Calendar flickering and other bug fixes">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/sources.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/sources.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Integrations/google_calendar_integration.py" beforeDir="false" afterPath="$PROJECT_DIR$/Integrations/google_calendar_integration.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Integrations/notion_todo_list_integration.py" beforeDir="false" afterPath="$PROJECT_DIR$/Integrations/notion_todo_list_integration.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Routes/Tkinter_Elemts/calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/calendar.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Routes/Tkinter_Elemts/todo_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/todo_list.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/home.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/home.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Routes/integrations_calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/integrations_calendar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/integrations_todo_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/integrations_todo_list.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TimeCraft.py" beforeDir="false" afterPath="$PROJECT_DIR$/TimeCraft.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/calendar_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/calendar_data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/calendar_data.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend.py" beforeDir="false" afterPath="$PROJECT_DIR$/frontend.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/genetic.py" beforeDir="false" afterPath="$PROJECT_DIR$/genetic.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/TimeCraft.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/message code dictionary.txt" beforeDir="false" afterPath="$PROJECT_DIR$/message code dictionary.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -272,7 +270,15 @@
       <option name="project" value="LOCAL" />
       <updated>1713882257664</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Time Craft V0.2 - Improved Google login flow, fixed Calendar flickering and other bug fixes">
+      <option name="closed" value="true" />
+      <created>1714210534697</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1714210534697</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -292,7 +298,8 @@
     <MESSAGE value="added genetic.py" />
     <MESSAGE value="Time Craft V0.1" />
     <MESSAGE value="Time Craft V0.1.1 - genetic algorithm bug fixes, new logo and removal of setting pages" />
-    <option name="LAST_COMMIT_MESSAGE" value="Time Craft V0.1.1 - genetic algorithm bug fixes, new logo and removal of setting pages" />
+    <MESSAGE value="Time Craft V0.2 - Improved Google login flow, fixed Calendar flickering and other bug fixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Time Craft V0.2 - Improved Google login flow, fixed Calendar flickering and other bug fixes" />
   </component>
   <component name="com.github.evgenys91.machinet.common.dslhistory.DslHistoryState">
     <option name="historyDtoById">

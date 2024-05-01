@@ -3,7 +3,7 @@ from tkinter import NW
 from math import floor
 import logging
 
-from config import notion_todo_lists, notion_todo_lists_hidden, notion_integration_secret
+from data_loader import notion_todo_lists, notion_todo_lists_hidden, notion_integration_secret
 
 
 class Integrations_Todo_List(object):
@@ -21,6 +21,7 @@ class Integrations_Todo_List(object):
         self.y_scroll = 0
 
         # order of the visualisation
+        self.draw_state = False
         self.order = []
 
         # create notion todo_list blocks
@@ -107,10 +108,13 @@ class Integrations_Todo_List(object):
             for (_, block), status in zip(self.notion_todo_list_blocks.items(), statuses):
                 block.set_status(status)
 
+
     # -------------------------
     # drawing/erasing functions
     # -------------------------
     def draw(self):
+        self.draw_state = True
+
         # notion todo_list block
         for _, block in self.notion_todo_list_blocks.items():
             block.draw()
@@ -127,6 +131,8 @@ class Integrations_Todo_List(object):
             self.notion_secret_popup.draw()
 
     def delete(self):
+        self.draw_state = False
+
         # notion todo_list block
         for _, block in self.notion_todo_list_blocks.items():
             block.delete()
@@ -294,6 +300,9 @@ class Notion_Todo_List_Block(object):
         # create error indicator
         if not self.status:
             self.status_indicator = image.Tk_Image(self.canvas, [(self.win_size[0] - 300) / 2 - 40, 40 + self.y_pos], "Assets/error_yellow.png")
+
+            if self.parent.draw_state:
+                self.status_indicator.draw()
         # remove error indicator
         elif self.status_indicator is not None:
             self.status_indicator.delete()
