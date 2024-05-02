@@ -461,6 +461,12 @@ class Backend(object):
 
         self.dispatch_message = frontend_connection
 
+    def clear_calendars(self):
+        for key in self.google_calendars.keys():
+            self.dispatch_message(104, ["RC", key])
+
+        self.google_calendars.clear()
+
     def receive_message(self, message_code, message):
         # log function
         self.func_logger.info(f"[backend] - retrieve message {[message_code, message]}")
@@ -511,7 +517,7 @@ class Backend(object):
         elif message_code == 105:
             if not self.google_calendar_integration.requesting_token:
                 # request token via thread
-                thread = threading.Thread(target=self.google_calendar_integration.request_token, daemon=True)
+                thread = threading.Thread(target=lambda: (self.google_calendar_integration.request_token(), self.clear_calendars()), daemon=True)
                 thread.start()
 
                 self.threads.update({"request token": thread})

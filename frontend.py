@@ -145,7 +145,7 @@ class GUI():
                 pass
             # "RC" -> remove calendar from calendars that are being taken into consideration
             elif message[0] == "RC":
-                pass
+                self.routes["Home"].calendar_vis.remove_calendar(message[1])
 
         # 105 => Request credential token
         if message_code == 105:
