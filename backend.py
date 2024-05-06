@@ -286,8 +286,8 @@ class Backend(object):
         # only schedule todos if there are todos to be scheduled
         if len(todos) > 0:
             # add appointments and todos to evaluation class
-            self.genetic_algorithm.add_appointments(appointments)
-            self.genetic_algorithm.add_tasks(todos)
+            self.genetic_algorithm.set_appointments(appointments)
+            self.genetic_algorithm.set_tasks(todos)
 
             # update Schedule todo_button
             self.dispatch_message(405, "evaluating best todo order...")

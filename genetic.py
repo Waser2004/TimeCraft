@@ -1,3 +1,4 @@
+import copy
 import logging
 import datetime
 import random
@@ -13,18 +14,18 @@ class Genetic_Algorithm(object):
         self.appointments = []
 
         # add appointments / tasks
-        self.add_tasks(tasks)
-        self.add_appointments(appointments)
+        self.set_tasks(tasks)
+        self.set_appointments(appointments)
 
     # ------------------------
     # add appointments / tasks
     # ------------------------
-    def add_tasks(self, tasks):
+    def set_tasks(self, tasks):
         # log functions
         self.func_logger.info(f"[genetic] - add tasks {tasks}")
 
         # add to new tasks to existing ones
-        self.tasks += tasks
+        self.tasks = copy.deepcopy(tasks)
 
         # assign new priorities
         priority_sorted = sorted(self.tasks, key=lambda task:(task[2] is None, task[2]))
@@ -43,12 +44,15 @@ class Genetic_Algorithm(object):
             self.gens = [random.sample(range(len(self.tasks)), len(self.tasks)) for _ in range(50)]
             self.evaluation_mode = "genetic"
 
-    def add_appointments(self, appointments):
+    def set_appointments(self, appointments):
         # log functions
         self.func_logger.info(f"[genetic] - add appointments {appointments}")
 
         # add appointments to existing ones
-        self.appointments += appointments
+        self.appointments = copy.deepcopy(appointments)
+
+        # merge appointments together
+        self.appointments = self.merge_appointments(deepcopy(self.appointments))
 
         # sort appointments based on start time
         self.appointments = sorted(self.appointments, key=lambda appointment: appointment[1])
@@ -146,11 +150,8 @@ class Genetic_Algorithm(object):
         # sort tasks based on given example
         sorted_tasks = [self.tasks[i] for i in example]
 
-        # merge appointments together
-        appointments = self.merge_appointments(deepcopy(self.appointments))
-
         # calculate the start and end time of each task for this order
-        timed_tasks = self.calculate_task_times(sorted_tasks, appointments, start_time)
+        timed_tasks = self.calculate_task_times(sorted_tasks, copy.deepcopy(self.appointments), start_time)
 
         # evaluate task score
         seconds_to_event_start = [(task[1] - start_time).total_seconds() for task in timed_tasks]

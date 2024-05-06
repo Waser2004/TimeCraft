@@ -7,8 +7,8 @@ class Rectangle(object):
         # assign variables
         self.canvas = canvas
 
-        self.corner_1 = corner_1
-        self.corner_2 = corner_2
+        self.corner_1 = [corner_1[0] + 1, corner_1[1] + 1]
+        self.corner_2 = [corner_2[0] - 1, corner_2[1] - 1]
         self.corner_radius = corner_radius
         self.color = list(color)
         self.outline_thickness = outline_thickness
@@ -78,7 +78,7 @@ class Rectangle(object):
                 points,
                 fill=fill_hex,
                 outline=outline_hex if self.outline_thickness > 0 else fill_hex,
-                width=(self.outline_thickness if self.outline_thickness > 0 else 1) if self.corner_radius > 0 else 0
+                width=self.outline_thickness if self.outline_thickness > 0 else 1
             )
 
         # update widget
@@ -88,7 +88,7 @@ class Rectangle(object):
                 self.object,
                 fill=fill_hex,
                 outline=outline_hex if self.outline_thickness > 0 else fill_hex,
-                width=(self.outline_thickness if self.outline_thickness > 0 else 1) if self.corner_radius > 0 else 0
+                width=self.outline_thickness + 1 if self.outline_thickness > 0 else 1
             )
 
     def delete(self):
@@ -106,7 +106,7 @@ class Rectangle(object):
     # update corner 1 parameter
     def set_corner_1(self, corner_1: [int, int]):
         # update variables
-        self.corner_1 = corner_1
+        self.corner_1 = [corner_1[0] + 1, corner_1[1] + 1]
 
         if self.object is not None:
             self.draw()
@@ -114,7 +114,7 @@ class Rectangle(object):
     # update corner 2 parameter
     def set_corner_2(self, corner_2: [int, int]):
         # update variables
-        self.corner_2 = corner_2
+        self.corner_2 = [corner_2[0] - 1, corner_2[1] - 1]
 
         if self.object is not None:
             self.draw()

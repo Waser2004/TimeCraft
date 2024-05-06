@@ -1,10 +1,11 @@
 from datetime import date, datetime, time, timedelta
-from math import floor
+from math import floor, ceil
 import tkinter as tk
 from tkinter.font import Font
 import re
+import copy
 
-from Routes.Tkinter_Elemts import entry, line, text, rectangle
+from Routes.Tkinter_Elemts import entry, line, text, rectangle, image
 
 
 class Calendar(object):
@@ -35,8 +36,12 @@ class Calendar(object):
         self.viewed_days_amount = 1
         self.active_date = date.today()
         self.time_span = [time(6), time(23)]
-        self.time_span = [time(6), time(23)]
         self.time_indication_delta = 1
+
+        # reset button
+        self.reset_button_state = False
+        self.reset_button_back = rectangle.Rectangle(self.canvas, [self.corner_2[0] - 40, self.corner_2[1] - 50], [self.corner_2[0] - 10, self.corner_2[1] - 20], 4, secondary_color, 0, [0, 0, 0])
+        self.reset_button_img = image.Tk_Image(self.canvas, [self.corner_2[0] - 24, self.corner_2[1] - 34], "Assets/reset.png", "center")
 
         # pop-up
         self.pop_up_state = False
@@ -71,6 +76,12 @@ class Calendar(object):
 
     def __update_time_indicator_loop(self):
         self.create_current_time_indication_line()
+
+        # update view
+        if (new_time_span := self.get_current_time_frame()) != self.time_span and not self.reset_button_state:
+            self.time_span = new_time_span
+
+            self.update()
 
         self.canvas.after(60000, self.__update_time_indicator_loop)
 
@@ -109,31 +120,78 @@ class Calendar(object):
 
         height_delta = self.corner_2[1] - self.corner_1[1] - 60
 
-        # create canvas elements
-        for i in range(floor((amount_of_indication_lines := (end_time - start_time).total_seconds() / 3600 / self.time_indication_delta)) + 1):
-            y_pos = height_delta / amount_of_indication_lines * i + self.corner_1[1] + 50
-            label_time = start_time + timedelta(hours=self.time_indication_delta * i)
+        counter = 1
+
+        # ---------------
+        # create top line
+        # ---------------
+        y_pos = self.corner_1[1] + 50
+        label_time = start_time
+        # update elements
+        if 0 < len(self.time_indication_labels):
+            self.time_indication_lines[0].set_pos([self.corner_1[0] + 30, y_pos], [self.corner_2[0], y_pos])
+
+            self.time_indication_labels[0].set_center([self.corner_1[0], y_pos])
+            self.time_indication_labels[0].set_text(label_time.strftime("%H:%M"))
+        # create new elements
+        else:
+            self.time_indication_lines.append(line.Line(self.canvas, [self.corner_1[0] + 30, y_pos], [self.corner_2[0], y_pos], self.secondary_color,1))
+            self.time_indication_labels.append(text.Text(self.canvas, label_time.strftime("%H:%M"), [self.corner_1[0], y_pos], self.secondary_color,10, anchor="w"))
+
+        # ------------------
+        # create inner lines
+        # ------------------
+        label_time = datetime.combine(datetime.today(), time(start_time.hour + 1))
+        if (label_time - start_time).total_seconds() < 1800:
+            label_time = datetime.combine(datetime.today(), time(start_time.hour + 2))
+
+        while label_time <= end_time - timedelta(minutes=30):
+            # create canvas elements
+            y_pos = height_delta / (end_time - start_time).total_seconds() * (label_time - start_time).total_seconds() + self.corner_1[1] + 50
 
             # update elements
-            if i < len(self.time_indication_labels):
-                self.time_indication_lines[i].set_pos([self.corner_1[0] + 30, y_pos], [self.corner_2[0], y_pos])
+            if counter < len(self.time_indication_labels):
+                self.time_indication_lines[counter].set_pos([self.corner_1[0] + 30, y_pos], [self.corner_2[0], y_pos])
 
-                self.time_indication_labels[i].set_center([self.corner_1[0], y_pos])
-                self.time_indication_labels[i].set_text(label_time.strftime("%H:%M"))
+                self.time_indication_labels[counter].set_center([self.corner_1[0], y_pos])
+                self.time_indication_labels[counter].set_text(label_time.strftime("%H:%M"))
+
             # create new elements
             else:
                 self.time_indication_lines.append(line.Line(self.canvas, [self.corner_1[0] + 30, y_pos], [self.corner_2[0], y_pos], self.secondary_color, 1))
                 self.time_indication_labels.append(text.Text(self.canvas, label_time.strftime("%H:%M"), [self.corner_1[0], y_pos], self.secondary_color, 10, anchor="w"))
 
+            # update variables
+            counter += 1
+            label_time += timedelta(hours=self.time_indication_delta)
+
+        # -----------------------
+        # create bottom indicator
+        # -----------------------
+        label_time = end_time
+        y_pos = self.corner_2[1] - 10
+        # update elements
+        if counter < len(self.time_indication_labels):
+            self.time_indication_lines[counter].set_pos([self.corner_1[0] + 30, y_pos], [self.corner_2[0], y_pos])
+
+            self.time_indication_labels[counter].set_center([self.corner_1[0], y_pos])
+            self.time_indication_labels[counter].set_text(label_time.strftime("%H:%M"))
+        # create new elements
+        else:
+            self.time_indication_lines.append(line.Line(self.canvas, [self.corner_1[0] + 30, y_pos], [self.corner_2[0], y_pos], self.secondary_color, 1))
+            self.time_indication_labels.append(text.Text(self.canvas, label_time.strftime("%H:%M"), [self.corner_1[0], y_pos], self.secondary_color, 10, anchor="w"))
+
+        counter += 1
+
         # delete and clear over the top indicators
-        while amount_of_indication_lines + 1 < len(self.time_indication_labels):
+        while counter < len(self.time_indication_labels):
             # delete
-            self.time_indication_lines[floor(amount_of_indication_lines) + 1].delete()
-            self.time_indication_labels[floor(amount_of_indication_lines) + 1].delete()
+            self.time_indication_lines[counter].delete()
+            self.time_indication_labels[counter].delete()
 
             # remove from list
-            self.time_indication_lines.pop(floor(amount_of_indication_lines) + 1)
-            self.time_indication_labels.pop(floor(amount_of_indication_lines) + 1)
+            self.time_indication_lines.pop(counter)
+            self.time_indication_labels.pop(counter)
 
     def create_date_labels(self):
         for day_i in range(self.viewed_days_amount):
@@ -161,7 +219,6 @@ class Calendar(object):
 
                 self.date_weekday_labels[self.viewed_days_amount].delete()
                 self.date_weekday_labels.pop(self.viewed_days_amount)
-
 
     @staticmethod
     def events_intersect(event_1, event_2):
@@ -236,6 +293,13 @@ class Calendar(object):
             self.current_time_line.draw()
             self.canvas.tag_raise(self.current_time_line.object)
 
+        if self.reset_button_state:
+            self.reset_button_back.draw()
+            self.reset_button_img.draw()
+
+            self.canvas.tag_raise(self.reset_button_back.object)
+            self.canvas.tag_raise(self.reset_button_img.object)
+
         # draw pop up
         if self.pop_up_state:
             self.draw_pop_up()
@@ -291,6 +355,9 @@ class Calendar(object):
         if self.pop_up_state:
             self.close_pop_up()
 
+        self.reset_button_back.delete()
+        self.reset_button_img.delete()
+
         # current time line
         if self.current_time_line is not None:
             self.current_time_line.delete()
@@ -335,6 +402,74 @@ class Calendar(object):
         hour, minute = map(int, time_str.split(":"))
 
         return datetime(year, month, day, hour, minute)
+
+    def get_current_time_frame(self):
+        now = datetime.now().time()
+
+        # general view
+        if time(22) >= now >= time(7):
+            return [time(6), time(23)]
+
+        # scrolled up views
+        elif now > time(22):
+            if now.hour + 1 <= 23:
+                return [time(now.hour - 16, now.minute), time(now.hour + 1, now.minute)]
+            else:
+                return [time(7), time(23, 59, 59)]
+
+        elif now < time(7):
+            if now.hour - 1 >= 0:
+                return [time(now.hour - 1, now.minute), time(now.hour + 16, now.minute)]
+            else:
+                return [time(0), time(17)]
+
+
+    def mouse_wheel(self, event):
+        if self.corner_1[0] < event.x < self.corner_2[0] and self.corner_1[1] < event.y < self.corner_2[1]:
+            # scroll up
+            if event.delta > 0:
+                if self.time_span[0] >= time(0, 30):
+                    self.time_span[0] = (datetime.combine(datetime.today(), self.time_span[0]) - timedelta(minutes=30)).time()
+                    self.time_span[1] = (datetime.combine(datetime.today(), self.time_span[1]) - timedelta(minutes=30)).time()
+                else:
+                    self.time_span[0] = time(0)
+                    self.time_span[1] = time(17)
+
+                if self.time_span[1].second != 0:
+                    self.time_span[1] = (datetime.combine(datetime.today(), self.time_span[1]) + timedelta(seconds=1)).time()
+
+            # scroll down
+            elif event.delta < 0:
+                if self.time_span[1] <= time(23):
+                    self.time_span[0] = (datetime.combine(datetime.today(), self.time_span[0]) + timedelta(minutes=30)).time()
+                    self.time_span[1] = (datetime.combine(datetime.today(), self.time_span[1]) + timedelta(minutes=30)).time()
+                elif self.time_span[1] <= time(23, 30):
+                    self.time_span[0] = (datetime.combine(datetime.today(), self.time_span[0]) + timedelta(minutes=30)).time()
+                    self.time_span[1] = (datetime.combine(datetime.today(), self.time_span[1]) + timedelta(minutes=29, seconds=59)).time()
+                else:
+                    self.time_span[0] = time(7)
+                    self.time_span[1] = time(23, 59, 59)
+
+            # show reset button
+            if self.get_current_time_frame() != self.time_span:
+                self.reset_button_state = True
+
+                # draw reset button
+                if self.draw_state:
+                    self.reset_button_back.draw()
+                    self.reset_button_img.draw()
+
+                    self.canvas.tag_raise(self.reset_button_back.object)
+                    self.canvas.tag_raise(self.reset_button_img.object)
+
+            # hide reset button for right timespan
+            else:
+                self.reset_button_state = False
+
+                self.reset_button_back.delete()
+                self.reset_button_img.delete()
+
+            self.update()
 
     # is pressed
     def is_pressed(self, event):
@@ -424,6 +559,17 @@ class Calendar(object):
                         self.draw_pop_up()
 
                         break
+
+                # reset button pressed
+                if self.reset_button_state and self.reset_button_back.is_pressed(event.x, event.y):
+                    self.reset_button_state = False
+
+                    self.reset_button_back.delete()
+                    self.reset_button_img.delete()
+
+                    self.time_span = self.get_current_time_frame()
+
+                    self.update()
             # pop-up is active
             else:
                 if not self.pop_up_background.is_pressed(event.x, event.y):
@@ -455,6 +601,9 @@ class Calendar(object):
         self.create_date_labels()
         self.create_calendar_appointments()
         self.create_current_time_indication_line()
+
+        self.reset_button_back.set_pos([self.corner_2[0] - 40, self.corner_2[1] - 50], [self.corner_2[0] - 10, self.corner_2[1] - 20])
+        self.reset_button_img.set_center([self.corner_2[0] - 24, self.corner_2[1] - 34])
 
         # update popup
         if self.pop_up_state:
@@ -499,10 +648,10 @@ class Calendar(object):
         active_datetime = datetime.combine(self.active_date, datetime.min.time())
         timespan_appointment = Appointment(None, None, [
             "timespan",
-            active_datetime + timedelta(hours=self.time_span[0].hour),
-            active_datetime + timedelta(hours=self.time_span[1].hour) + timedelta(days=self.viewed_days_amount - 1)
+            datetime.combine(active_datetime, self.time_span[0]),
+            datetime.combine(active_datetime, self.time_span[1]) + timedelta(days=self.viewed_days_amount - 1)
         ])
-        timespan = [active_datetime + timedelta(hours=self.time_span[0].hour), active_datetime + timedelta(hours=self.time_span[1].hour)]
+        timespan = [datetime.combine(active_datetime, self.time_span[0]), datetime.combine(active_datetime, self.time_span[1])]
 
         # create new appointment list
         appointments = []
@@ -581,39 +730,76 @@ class Calendar(object):
                             appointments.append(appointment)
                             self.appointment_ids.append([name, app_i])
 
-        sorted_appointments = sorted(appointments, key=lambda x: x.duration)
-        sorted_appointments.reverse()
+        # initialise and sort lists
+        sorted_appointments = sorted(appointments, key=lambda x: x.actual_time_frame[0])
+        calendar_apps = []
 
-        # -----------------------------
-        # creating children and parents
-        # -----------------------------
-        for i, app in enumerate(sorted_appointments):
-            for rev_app in sorted_appointments[i + 1:]:
-                # check for intersection
-                if self.events_intersect(app, rev_app):
-                    # only add as child if it does not intersect with another child
-                    if not [self.events_intersect(child, rev_app) for child in app.children].count(True):
-                        app.children.append(rev_app)
-                        rev_app.parents.append(app)
-
-        # -----------------------------
-        # creating intersection lists
-        # -----------------------------
-        parent_appointments = []
+        # ------------
+        # create order
+        # ------------
         for app in sorted_appointments:
-            # only create intersection lists on parent appointments
-            if app.parents == []:
-                app.intersection_lists = app.get_intersection_lists()
-                parent_appointments.append(app)
+            # create Appointment and get intersections
+            intersections = self.get_intersecting_apps(app, calendar_apps)
 
-        sorted_parent_appointments = sorted(parent_appointments, key=lambda x: max([len(lst) for lst in x.intersection_lists]))
-        sorted_parent_appointments.reverse()
+            # update calendar apps
+            for ref_app in calendar_apps:
+                ref_app.updated = False
 
-        # -----------------------------
-        # set widths
-        # -----------------------------
-        for app in sorted_parent_appointments:
-            app.set_width()
+            # intersections
+            if len(intersections) > 0:
+                # gab left of the appointments
+                if (min_start := min([ref_app.start for ref_app in intersections])) > 0:
+                    app.start = 0
+                    app.width = min_start
+                    app.on_the_right = False
+
+                # gab right of the appointments
+                else:
+                    max_end = max([ref_app.start + ref_app.width for ref_app in intersections])
+
+                    # set params
+                    app.width = 1
+                    app.start = max_end
+
+                    # update intersections on_the_right param to false
+                    for intersection in intersections:
+                        intersection.on_the_right = False
+
+                # no intersections
+            else:
+                app.start = 0
+                app.width = 1
+
+            # add app to calendar app list
+            calendar_apps.append(app)
+
+        # --------------------
+        # squeeze appointments
+        # --------------------
+        reverse_track_tree = self.reverse_track(appointments, [app for app in appointments if app.on_the_right])
+        reverse_track_tree = sorted(reverse_track_tree, key=lambda x: - len(x))
+
+        for branch in reverse_track_tree:
+            # calculate parameters
+            open_space = 1 - sum([app.width for app in branch if app.updated])
+            modify_width = sum([app.width for app in branch if not app.updated])
+
+            # calculate start offset
+            start_offset_count = 0
+            start_offset = 0
+            for ref_app in reversed(branch):
+                if ref_app.updated:
+                    start_offset_count += 1
+                    start_offset += ref_app.width
+                else:
+                    break
+
+            # update widths
+            for ref_app in branch:
+                if not ref_app.updated:
+                    ref_app.start = (ref_app.start - start_offset_count) * (open_space / modify_width) + start_offset
+                    ref_app.width = ref_app.width * (open_space / modify_width)
+                    ref_app.updated = True
 
         # -----------------------------
         # create appointment elements
@@ -750,6 +936,60 @@ class Calendar(object):
             self.appointment_time_labels[time_label_counter].delete()
             self.appointment_time_labels.pop(time_label_counter)
 
+    @staticmethod
+    def get_intersecting_apps(app, calender_apps):
+        intersections = []
+
+        # calculate intersections
+        for ref_app in calender_apps:
+            if ref_app.intersects(app):
+                intersections.append(ref_app)
+
+        return intersections
+
+    @staticmethod
+    def reverse_track(appointments, starts):
+        reverse_track_tree = []
+
+        appointments = sorted(appointments, key=lambda x: 1 - (x.start + x.width))
+
+        for start in starts:
+            branches = [[start]]
+
+            while len(branches) > 0:
+                # find intersections on the left
+                branch_intersections = []
+                for i, branch in enumerate(branches):
+                    branch_intersections.append([])
+
+                    for app in appointments:
+                        if branch[-1].intersects(app) and app.start + app.width == branch[-1].start:
+                            branch_intersections[i].append(app)
+
+                # update branches
+                remove_list = []
+                for i, intersections in enumerate(branch_intersections):
+                    # no intersections on the left branch complete
+                    if len(intersections) == 0:
+                        remove_list.append(i)
+
+                    # one intersection extend branch
+                    elif len(intersections) == 1:
+                        branches[i].append(intersections[0])
+
+                    # multiple intersections at joint create new branches
+                    elif len(intersections) > 1:
+                        parent_branch = copy.deepcopy(branches[i])
+                        branches[i].append(intersections.pop(0))
+
+                        for intersection in intersections:
+                            branches.append(parent_branch + [intersection])
+
+                for i in reversed(remove_list):
+                    reverse_track_tree.append(branches.pop(i))
+
+        return reverse_track_tree
+
 
 # Appointment class
 class Appointment(object):
@@ -766,78 +1006,12 @@ class Appointment(object):
         self.width = None
         self.start = None
 
-        # parent/child Appointment
-        self.parents = []
-        self.children = []
+        self.updated = False
+        self.on_the_right = True
 
-        # intersection lists
-        self.intersection_lists = []
-
-    def get_intersection_lists(self):
-        if not self.children:
-            return [[self]]
-
-        sequences = []
-        for child in self.children:
-            child_sequences = child.get_intersection_lists()
-            for seq in child_sequences:
-                sequences.append([self] + seq)
-
-        return sequences
-
-    def set_width(self):
-        # children have no set width
-        if [app.width for lst in self.intersection_lists for app in lst] == [None for lst in self.intersection_lists for
-                                                                             _ in lst]:
-            # calculate own width and set start
-            self.width = 1 / max([len(lst) for lst in self.intersection_lists])
-            self.start = 0
-
-            # calculate width of children
-            if len(self.children) > 0:
-                for lst in self.intersection_lists:
-                    width = (1 - self.width) / (len(lst) - 1)
-                    for i, app in enumerate(lst[1:]):
-                        app.width = width
-                        app.start = self.width + width * i
-
-        # children have set width
-        else:
-            widths = []
-            amount_of_elms_with_no_width = []
-            # loop over all intersection lists
-            for lst in self.intersection_lists:
-                # set params
-                widths.append(1)
-                amount_of_elms_with_no_width.append(0)
-                # get how many appointments do not have a width and how much width is left to be occupied
-                for app in lst[1:]:
-                    # app with width
-                    if app.width:
-                        widths[-1] -= app.width
-                    # app without width
-                    else:
-                        amount_of_elms_with_no_width[-1] += 1
-
-            # get smallest width
-            elm_widths = []
-            for i, (width, amount_of_elm) in enumerate(zip(widths, amount_of_elms_with_no_width)):
-                elm_widths.append([i, width / (amount_of_elm + 1)])
-
-            # calculate own width
-            sorted_elm_widths = sorted(elm_widths, key=lambda x: x[1])
-            self.width = sorted_elm_widths[0][1]
-            self.start = 0
-
-            # calculate width of children
-            if len(self.children) > 0:
-                for i, lst in enumerate(self.intersection_lists):
-                    if amount_of_elms_with_no_width[i] > 0:
-                        width = (widths[i] - self.width) / (amount_of_elms_with_no_width[i])
-                        for i_app, app in enumerate(lst[1:]):
-                            if not app.width:
-                                app.width = width
-                                app.start = self.width + i_app * width
+    # intersect
+    def intersects(self, other) -> bool:
+        return True if self.actual_time_frame[0] < other.actual_time_frame[1] and self.actual_time_frame[1] > other.actual_time_frame[0] else False
 
     def __repr__(self):
-        return str([self.start, self.width])
+        return str(self.appointment[0])

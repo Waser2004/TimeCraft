@@ -161,7 +161,6 @@ class Google_Calendar_Block(object):
         left_x = (self.win_size[0] - 300) / 2
         self.title = text.Text(self.canvas, "Google Calendars", [left_x, 50], [230, 230, 230], 20, anchor=NW)
         self.vertical_line = line.Line(self.canvas, [left_x + 15, 85], [left_x + 15, 100], [64, 71, 79], 1)
-        self.spacer = line.Line(self.canvas, [left_x, 125], [left_x + 600, 125], [64, 71, 79], 1)
 
         # calender labels
         self.calendar_labels = []
@@ -188,7 +187,6 @@ class Google_Calendar_Block(object):
         # update title
         self.title.set_center([left_x, self.y_scroll + 50])
         self.vertical_line.set_pos([left_x + 10, self.y_scroll + 85], [left_x + 10, self.y_scroll + 68 + len(self.calendars) * 31 if len(self.calendar_labels) > 0 else 100])
-        self.spacer.set_pos([left_x, self.y_scroll + 98 + len(self.calendars) * 31 if len(self.calendar_labels) > 0 else self.y_scroll + 125], [left_x + 600, self.y_scroll + 98 + len(self.calendars) * 31 if len(self.calendar_labels) > 0 else self.y_scroll + 125])
 
         # update calender options
         for i, (label, checkbox, line) in enumerate(zip(self.calendar_labels, self.calendar_checkboxes, self.indicator_lines)):
@@ -246,7 +244,6 @@ class Google_Calendar_Block(object):
 
             # update vertical/spacer line position
             self.vertical_line.set_end_pos([left_x + 10, self.y_scroll + 68 + len(self.calendars) * 31])
-            self.spacer.set_pos([left_x, self.y_scroll + 98 + len(self.calendars) * 31], [left_x + 600, self.y_scroll + 98 + len(self.calendars) * 31])
 
             # error indicators
             if self.status_indicator_img is not None and not self.connection_status:
@@ -288,7 +285,6 @@ class Google_Calendar_Block(object):
     def draw(self):
         self.title.draw()
         self.vertical_line.draw()
-        self.spacer.draw()
 
         # draw calendar options
         for label, checkbox, line in zip(self.calendar_labels, self.calendar_checkboxes, self.indicator_lines):
@@ -305,7 +301,6 @@ class Google_Calendar_Block(object):
     def delete(self):
         self.title.delete()
         self.vertical_line.delete()
-        self.spacer.delete()
 
         # draw calendar options
         for label, checkbox, line in zip(self.calendar_labels, self.calendar_checkboxes, self.indicator_lines):

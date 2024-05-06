@@ -23,9 +23,9 @@ class Checkbox(object):
         self.outline_thickness = outline_thickness
         
         # checkmark
-        inner_rect_corner_1 = [corner_1[0] + outline_thickness + 2, corner_1[1] + outline_thickness + 2]
+        inner_rect_corner_1 = [corner_1[0] + outline_thickness + 1, corner_1[1] + outline_thickness + 1]
         inner_rect_corner_2 = [corner_2[0] - outline_thickness - 1, corner_2[1] - outline_thickness - 1]
-        self.inner_rect = rectangle.Rectangle(self.canvas, inner_rect_corner_1, inner_rect_corner_2, corner_radius, 
+        self.inner_rect = rectangle.Rectangle(self.canvas, inner_rect_corner_1, inner_rect_corner_2, corner_radius,
                                               color, 0, [0, 0, 0])
         
         # checkmark outline
@@ -65,7 +65,7 @@ class Checkbox(object):
         self.corner_1 = corner_1
 
         # update checkmark
-        self.inner_rect.set_corner_1([self.corner_1[0] + self.outline_thickness + 2, self.corner_1[1] + self.outline_thickness + 2])
+        self.inner_rect.set_corner_1([self.corner_1[0] + self.outline_thickness + 1, self.corner_1[1] + self.outline_thickness + 1])
 
         # update outline
         self.outer_lines[0].set_pos(self.corner_1, [self.corner_1[0], self.corner_2[1]])
@@ -79,7 +79,7 @@ class Checkbox(object):
         self.corner_2 = corner_2
 
         # update checkmark
-        self.inner_rect.set_corner_2([self.corner_2[0] - self.outline_thickness - 2, self.corner_2[1] - self.outline_thickness - 2])
+        self.inner_rect.set_corner_2([self.corner_2[0] - self.outline_thickness - 1, self.corner_2[1] - self.outline_thickness - 1])
 
         # update outline
         self.outer_lines[0].set_pos(self.corner_1, [self.corner_1[0], self.corner_2[1]])

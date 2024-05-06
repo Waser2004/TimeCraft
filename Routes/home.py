@@ -185,3 +185,5 @@ class Home(object):
     # mouse wheel
     def mouse_wheel(self, event):
         self.todo_list_vis.mouse_wheel(event)
+
+        self.calendar_vis.mouse_wheel(event)

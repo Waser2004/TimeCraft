@@ -4,10 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="Time Craft V0.3.1 - removed manually added test appointment">
+    <list default="true" id="8a8dfe1c-9131-4bdb-a8c8-ed5fd684e721" name="Changes" comment="Time Craft V0.3.2 - minor bug fixes and added requierd missing files">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/sources.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/sources.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/Tkinter_Elemts/calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/calendar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/Tkinter_Elemts/checkbox.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/checkbox.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/Tkinter_Elemts/rectangle.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/Tkinter_Elemts/rectangle.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/home.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/home.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Routes/integrations_calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/Routes/integrations_calendar.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend.py" beforeDir="false" afterPath="$PROJECT_DIR$/frontend.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/genetic.py" beforeDir="false" afterPath="$PROJECT_DIR$/genetic.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -285,7 +291,15 @@
       <option name="project" value="LOCAL" />
       <updated>1714590217293</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Time Craft V0.3.2 - minor bug fixes and added requierd missing files">
+      <option name="closed" value="true" />
+      <created>1714661023657</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1714661023657</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -308,7 +322,8 @@
     <MESSAGE value="Time Craft V0.2 - Improved Google login flow, fixed Calendar flickering and other bug fixes" />
     <MESSAGE value="Time Craft V0.3 - major bugfixes and new feature to support setting todo to done via Notion" />
     <MESSAGE value="Time Craft V0.3.1 - removed manually added test appointment" />
-    <option name="LAST_COMMIT_MESSAGE" value="Time Craft V0.3.1 - removed manually added test appointment" />
+    <MESSAGE value="Time Craft V0.3.2 - minor bug fixes and added requierd missing files" />
+    <option name="LAST_COMMIT_MESSAGE" value="Time Craft V0.3.2 - minor bug fixes and added requierd missing files" />
   </component>
   <component name="com.github.evgenys91.machinet.common.dslhistory.DslHistoryState">
     <option name="historyDtoById">

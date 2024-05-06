@@ -1,6 +1,7 @@
-trash_bin.png -> https://www.flaticon.com/free-icons/trash-can
-error.png -> https://www.flaticon.com/de/kostenlose-icons/error
-eye_hide.png -> https://www.flaticon.com/free-icons/password
-eye_show.png -> https://www.flaticon.com/free-icons/eye
+trash_bin.png -> https://www.flaticon.com/free-icons/trash - created by Freepik - Flaticon
+error.png -> https://www.flaticon.com/de/kostenlose-icons/error - created by Gregor Cresnar - Flaticon
+eye_hide.png -> https://www.flaticon.com/free-icons/password - created by th studio - Flaticon
+eye_show.png -> https://www.flaticon.com/free-icons/eye - created by Kiranshastry - Flaticon
 notion_logo.png -> https://www.notion.so/Media-Kit-205535b1d9c4440497a3d7a2ac096286
 google_logo.png -> Google LLC, Public domain, via Wikimedia Commons
+reset.png -> https://www.flaticon.com/free-icons/reset - created by Rahul Kaklotar - Flaticon
