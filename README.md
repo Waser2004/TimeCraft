@@ -9,4 +9,4 @@ The scheduling algorithm ensures that your tasks are placed in your calendar wit
 Upon reaching the scheduled end time for a task, TimeCraft automatically updates the todo appointment. Additionally, when you mark a task as completed within the app, TimeCraft automatically updates your schedule.
 
 ## Settings
-As of *Version 0.3*, there are no available settings.
+As of *Version 0.4*, there are no available settings.
