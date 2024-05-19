@@ -10,8 +10,12 @@ class Genetic_Algorithm(object):
     func_logger = logging.getLogger("func_log")
 
     def __init__(self, tasks, appointments):
-        self.tasks = []
+        self.todos = []
+        self.locked_todos = []
         self.appointments = []
+
+        self.gens = []
+        self.evaluation_mode = None
 
         # add appointments / tasks
         self.set_tasks(tasks)
@@ -20,28 +24,48 @@ class Genetic_Algorithm(object):
     # ------------------------
     # add appointments / tasks
     # ------------------------
-    def set_tasks(self, tasks):
+    def set_tasks(self, todos):
         # log functions
-        self.func_logger.info(f"[genetic] - add tasks {tasks}")
+        self.func_logger.info(f"[genetic] - add tasks {todos}")
 
-        # add to new tasks to existing ones
-        self.tasks = copy.deepcopy(tasks)
+        # set todos
+        todos = copy.deepcopy(todos)
 
-        # assign new priorities
-        priority_sorted = sorted(self.tasks, key=lambda task:(task[2] is None, task[2]))
-        self.tasks = [prio[:2] + [i + 1] + [prio[3]] for i, prio in enumerate(priority_sorted)]
+        # remove locked and hidden todos
+        locked_todos = {}
+        for key in list(todos.keys()):
+            todo = todos[key]
 
-        # assign estimate time for tasks with None given estimated time
-        self.tasks = [[title, est_time if est_time is not None else 0.2, prio, id] for title, est_time, prio, id in self.tasks]
+            if todo["todo states"]["hidden"] or todo["properties"]["status"] == "Done" or todo["properties"]["status"] == "Paused":
+                todos.pop(key)
+
+            elif todo["todo states"]["locked"]:
+                locked_todos.update({key: todos.pop(key)})
+
+        # sort todos and locked todos
+        self.locked_todos = sorted([[key, todo] for key, todo in locked_todos.items()],key=lambda x: (x[1]["order index"] is None, x[1]["order index"]))
+        self.todos = sorted([[key, todo] for key, todo in todos.items()], key=lambda x: (x[1]["properties"]["priority"] is None, x[1]["properties"]["priority"]))
+
+        # assign new priorities and default estimated time if None is given to todos
+        for i in range(len(self.todos)):
+            self.todos[i][1]["properties"]["priority"] = i + 1
+
+            if self.todos[i][1]["properties"]["estimated time"] is None:
+                self.todos[i][1]["properties"]["estimated time"] = 0.2
+
+        # assign default estimated time if None is given to locked todos
+        for i in range(len(self.locked_todos)):
+            if self.locked_todos[i][1]["properties"]["estimated time"] is None:
+                self.locked_todos[i][1]["properties"]["estimated time"] = 0.2
 
         self.evaluation_mode = None
         # create all possible gens
-        if 1_000 >= math.factorial(len(self.tasks)):
-            self.gens = list(permutations(list(range(len(self.tasks))), len(self.tasks)))
+        if 1_000 >= math.factorial(len(self.todos)):
+            self.gens = list(permutations(list(range(len(self.todos))), len(self.todos)))
             self.evaluation_mode = "forward"
         # create 1'000 random gens
         else:
-            self.gens = [random.sample(range(len(self.tasks)), len(self.tasks)) for _ in range(50)]
+            self.gens = [random.sample(range(len(self.todos)), len(self.todos)) for _ in range(50)]
             self.evaluation_mode = "genetic"
 
     def set_appointments(self, appointments):
@@ -60,9 +84,13 @@ class Genetic_Algorithm(object):
     # ------------------
     # find best solution
     # ------------------
-    def evaluate(self, start_time = datetime.datetime.now()):
+    def evaluate(self, start_time = None):
         # log functions
         self.func_logger.info(f"[genetic] - evaluate {start_time}")
+
+        # update start time if locked todos exist
+        if start_time is None and len(self.locked_todos) > 0:
+            start_time = self.locked_todos[0][1]["appointments"][-1][0]
 
         # evaluate if all possible variations
         if self.evaluation_mode == "forward":
@@ -72,9 +100,6 @@ class Genetic_Algorithm(object):
             for i, gen in enumerate(self.gens[1:]):
                 if (fit := self.fitness(gen, start_time)) <= best_solution[1]:
                     best_solution = [i + 1, fit]
-
-            # sort tasks based on given example
-            sorted_tasks = [self.tasks[i] for i in self.gens[best_solution[0]]]
 
         # genetic algorithm
         elif self.evaluation_mode == "genetic":
@@ -137,35 +162,36 @@ class Genetic_Algorithm(object):
             best_solution = [0, ranked_gens[0][0]]
 
         # sort tasks based on given example
-        sorted_tasks = [self.tasks[i] for i in self.gens[best_solution[0]]]
+        sorted_tasks = self.locked_todos + [self.todos[i] for i in self.gens[best_solution[0]]]
 
         # calculate the start and end time of each task for this order
         timed_tasks = self.calculate_task_times(sorted_tasks, deepcopy(self.appointments), start_time)
 
-        return [[task[0], task[1], task[2], "", task[3]] for task in timed_tasks]
+        return timed_tasks
 
     def fitness(self, example, start_time):
         score = 0
 
         # sort tasks based on given example
-        sorted_tasks = [self.tasks[i] for i in example]
+        sorted_tasks = self.locked_todos + [self.todos[i] for i in example]
 
         # calculate the start and end time of each task for this order
         timed_tasks = self.calculate_task_times(sorted_tasks, copy.deepcopy(self.appointments), start_time)
 
         # evaluate task score
-        seconds_to_event_start = [(task[1] - start_time).total_seconds() for task in timed_tasks]
+        todo_ids = [todo[0] for todo in self.todos]
+        seconds_to_event_start = [(task[1] - start_time).total_seconds() for task in timed_tasks if todo_ids.count(task[0])]
         for i, time_offset in enumerate(seconds_to_event_start):
             # score is relative time to task start multiplied with 3/4 of the reversed priorities
             time_value = time_offset / max(seconds_to_event_start) * len(sorted_tasks) if max(seconds_to_event_start) > 0 else 0
-            priority_value = (len(seconds_to_event_start) - self.tasks[example[i]][2] + 1) ** 1.5
+            priority_value = (len(seconds_to_event_start) - self.todos[example[i]][1]["properties"]["priority"] + 1) ** 1.5
 
             score += time_value * priority_value
 
         return score
 
     @staticmethod
-    def calculate_task_times(tasks, appointments, start_time):
+    def calculate_task_times(todos, appointments, start_time):
         timed_tasks = []
         time = start_time
 
@@ -173,12 +199,13 @@ class Genetic_Algorithm(object):
         appointments = [app for app in appointments if app[2] > start_time]
 
         # find a valid space for each task
-        for task in tasks:
-            task_timeframe = [time, time + datetime.timedelta(hours=task[1])]
+        for todo in todos:
+            duration = todo[1]["properties"]["estimated time"] + todo[1]["properties"]["extra time"] - todo[1]["properties"]["elapsed duration"]
+            task_timeframe = [time, time + datetime.timedelta(hours=duration)]
 
             # if there are no upcoming events
             if 0 == len(appointments):
-                timed_tasks.append([task[0]] + task_timeframe + [task[3]])
+                timed_tasks.append([todo[0]] + task_timeframe)
                 time = task_timeframe[1] + datetime.timedelta(minutes=5)
 
             # there are upcoming events
@@ -189,7 +216,7 @@ class Genetic_Algorithm(object):
                     # task fits before appointment
                     if task_timeframe[0] <= appointment[1] and task_timeframe[1] <= appointment[1]:
 
-                        timed_tasks.append([task[0]] + task_timeframe + [task[3]])
+                        timed_tasks.append([todo[0]] + task_timeframe)
                         time = task_timeframe[1] + datetime.timedelta(minutes=5)
 
                         break
@@ -198,12 +225,12 @@ class Genetic_Algorithm(object):
                     if task_timeframe[0] >= appointment[2] and task_timeframe[1] >= appointment[2]:
                         # task does not fit before next appointment moving on after it
                         if len(appointments) > 1 and task_timeframe[1] > appointments[1][1]:
-                            task_timeframe = [appointment[2], appointment[2] + datetime.timedelta(hours=task[1])]
+                            task_timeframe = [appointment[2], appointment[2] + datetime.timedelta(hours=duration)]
                             appointments.remove(appointment)
 
                         # task fits before next appointment
                         else:
-                            timed_tasks.append([task[0]] + task_timeframe + [task[3]])
+                            timed_tasks.append([todo[0]] + task_timeframe)
                             time = task_timeframe[1] + datetime.timedelta(minutes=5)
                             appointments.remove(appointment)
 
@@ -211,11 +238,11 @@ class Genetic_Algorithm(object):
 
                     # task interferes with appointment
                     else:
-                        task_timeframe = [appointment[2], appointment[2] + datetime.timedelta(hours=task[1])]
+                        task_timeframe = [appointment[2], appointment[2] + datetime.timedelta(hours=duration)]
 
                         # add to task to calendar after appointment if there is no more upcoming appointment
                         if len(appointments) == 1:
-                            timed_tasks.append([task[0]] + task_timeframe + [task[3]])
+                            timed_tasks.append([todo[0]] + task_timeframe)
 
                         appointments.remove(appointment)
 

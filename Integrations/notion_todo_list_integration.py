@@ -65,7 +65,8 @@ class Notion_Todo_List_Integration(object):
                     task["properties"]["title"]["title"][0]["text"]["content"],   # retrieve title
                     task["properties"]["est. time"]["number"],                    # retrieve estimated time
                     task["properties"]["priority"]["number"],                     # retrieve priority
-                    task["id"]                                                    # retrieve task id
+                    task["properties"]["status"]["select"]["name"],               # retrieve status
+                    task["id"],                                                   # retrieve task id
                 ])
 
         except:
@@ -106,7 +107,7 @@ class Notion_Todo_List_Integration(object):
         }
 
         # get row id
-        row_id = task[3]
+        row_id = task[4]
 
         # only continue if there is a row id given
         if row_id is not None:

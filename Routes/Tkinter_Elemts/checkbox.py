@@ -101,7 +101,7 @@ class Checkbox(object):
         self.color = color
 
         # update checkmark
-        self.inner_rect.set_color(self.corner_radius)
+        self.inner_rect.set_color(self.color)
 
     # update outline thickness parameter
     def set_outline_thickness(self, outline_thickness: int):
@@ -138,7 +138,7 @@ class Checkbox(object):
 
     # check if it is pressed
     def is_pressed(self, x: int, y: int) -> bool:
-        # ius pressed
+        # is pressed
         if self.corner_1[0] <= x <= self.corner_2[0] and self.corner_1[1] <= y <= self.corner_2[1]:
             # uncheck
             if self.state:

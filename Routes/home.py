@@ -81,6 +81,7 @@ class Home(object):
         self.dispatch_message = backend_connection
 
         self.todo_list_vis.set_backend_connection(backend_connection)
+        self.calendar_vis.set_backend_connection(backend_connection)
 
     # -------------
     # window events
@@ -122,8 +123,7 @@ class Home(object):
     # left click
     def mouse_left_click(self, event):
         # schedule Todos clicked
-        if self.schedule_todos.is_pressed(event.x, event.y) and self.schedule_todos_label.text == "Schedule Todos" and \
-            self.frontend.statuses["google calendar connection status"]:
+        if self.schedule_todos.is_pressed(event.x, event.y) and self.schedule_todos_label.text == "Schedule Todos":
             # update schedule todos button label
             self.schedule_todos_label.set_text("pleas wait, scheduling todos...")
             self.schedule_todos.set_color([100, 100, 100])
@@ -137,6 +137,10 @@ class Home(object):
 
             # todo_list vis
             self.todo_list_vis.mouse_left_click(event)
+
+    # mouse movement
+    def mouse_movement(self, event):
+        self.calendar_vis.mouse_movement(event)
     
     def right_arrow(self, event):
         active_datetime = datetime(

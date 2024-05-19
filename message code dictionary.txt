@@ -34,7 +34,7 @@
 401 => Request and send Todos from/for Home.py
 402 => Request and send Calendar Appointments from/for Home.py
     - frontend message content: [start, end]
-    - backend message content:  [calendars, ...]
+    - backend message content:  [[appointments, locks], ...]
 403 => Update Todos
     "AT" -> Update todos specifications
     "CT" -> set todo_state to done (check todos)
@@ -44,6 +44,10 @@
     - will only send from backend to the frontend
 405 => Update scheduling todos button label
     - will only send from backend to the frontend
+406 => Update schedule order
+    "MU" -> move appointment up
+    "MD" -> move appointment down
+    "LO" -> lock appointment
 
 --- 500 -> Settings ---
 

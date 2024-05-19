@@ -261,7 +261,7 @@ class Todo_List_Block(object):
                 ])
 
             # create active indicator
-            if self.active_todo == todo[3]:
+            if self.active_todo == todo[4]:
                 x_offset = self.todo_blocks[i][1].text.font.measure(self.todo_blocks[i][1].text.text) + 55
 
                 self.active_todo_background.set_pos([x_pos + x_offset, y_pos + 2], [x_pos + x_offset + 36, y_pos + 14])
@@ -277,7 +277,7 @@ class Todo_List_Block(object):
 
         # set active todo_at the top
         for i, todo in enumerate(self.todos):
-            if todo[3] == self.active_todo:
+            if todo[4] == self.active_todo:
                 self.todos.insert(0, self.todos.pop(i))
 
         self.update()
@@ -287,7 +287,7 @@ class Todo_List_Block(object):
 
     def remove_todos(self, ids):
         for remove_todo in ids:
-            self.todos = [todo for todo in self.todos if todo[3] != remove_todo]
+            self.todos = [todo for todo in self.todos if todo[4] != remove_todo]
 
         self.update()
 
@@ -304,7 +304,7 @@ class Todo_List_Block(object):
         # put active todo_at the beginning of the list
         else:
             for i, todo in enumerate(self.todos):
-                if todo[3] == self.active_todo:
+                if todo[4] == self.active_todo:
                     self.todos.insert(0, self.todos.pop(i))
 
         # update
@@ -407,16 +407,19 @@ class Todo_List_Block(object):
             if block[0].is_pressed(event.x, event.y):
                 self.parent.todo_checked(self.todo_list_name, self.todos[i])
 
-        # add new todo_pressed
-        y_pos_1, y_pos_2 = self.corner_1[1] + self.height - 70, self.corner_1[1] + self.height - 35
-        if self.corner_1[0] <= event.x <= self.corner_2[0] and y_pos_1 <= event.y <= y_pos_2:
-            # set todolist state to add new todo_
-            self.add_todo_state = True
-            self.todos.append(["", None, None, None])
+                break
 
-            # update
-            self.update()
-            self.parent.update()
+        else:
+            # add new todo_pressed
+            y_pos_1, y_pos_2 = self.corner_1[1] + self.height - 70, self.corner_1[1] + self.height - 35
+            if self.corner_1[0] <= event.x <= self.corner_2[0] and y_pos_1 <= event.y <= y_pos_2:
+                # set todolist state to add new todo_
+                self.add_todo_state = True
+                self.todos.append(["", None, None, None])
+
+                # update
+                self.update()
+                self.parent.update()
 
     # entry update
     def entry_update(self, text):

@@ -123,10 +123,6 @@ class GUI():
                 self.dispatch_message(102, None)
 
             self.routes["Integrations-calendar"].set_google_calendar_status(message[0], message[1])
-            # update schedule button at the start of the program
-            if self.routes["Home"].init_state:
-                self.routes["Home"].schedule_todos.set_color([83, 191, 102])
-                self.routes["Home"].init_state = False
 
         # 102 => Request and send avilable google Calendar list
         elif message_code == 102:
@@ -198,15 +194,17 @@ class GUI():
             self.routes["Home"].schedule_todos_label.set_text("Schedule Todos")
 
             # add the scheduled todos to the calendar vis
-            appointments = [app + [""] for app in message]
+            appointments = [app + [""] for app in message[0]]
+            locks = copy.copy(message[1])
+
             # add new calendar
             if not "scheduled todos" in self.routes["Home"].calendar_vis.calendars:
-                calendar = {"name": "scheduled todos", "color": [83, 191, 102], "appointments": appointments}
+                calendar = {"name": "scheduled todos", "color": [83, 191, 102], "appointments": appointments, "locks": locks}
                 self.routes["Home"].calendar_vis.add_calendar("scheduled todos", calendar)
 
             # update existing one
             else:
-                self.routes["Home"].calendar_vis.update_calendar("scheduled todos", appointments)
+                self.routes["Home"].calendar_vis.update_calendar("scheduled todos", appointments, locks)
 
         # --- 400 -> Home.py Requests --- #
         # 401 => Request and send Todos from/for Home.py
@@ -234,19 +232,20 @@ class GUI():
         # 402 => Request and send Calendar Appointments from/for Home.py
         elif message_code == 402:
             # update calendar vis
-            for name, appointments in message.items():
+            for name, (appointments, locks) in message.items():
                 # add new calendar
                 if not name in self.routes["Home"].calendar_vis.calendars:
                     calendar = {
                         "name": name,
                         "color": [83, 191, 102] if name == "scheduled todos" else [56, 86, 68] if name == "done todos" else [100, 100, 100],
-                        "appointments": appointments
+                        "appointments": appointments,
+                        "locks": locks
                     }
                     self.routes["Home"].calendar_vis.add_calendar(name, calendar)
 
                 # update existing one
                 else:
-                    self.routes["Home"].calendar_vis.update_calendar(name, appointments)
+                    self.routes["Home"].calendar_vis.update_calendar(name, appointments, locks)
 
             self.routes["Home"].requesting_appointments = False
 
@@ -263,7 +262,7 @@ class GUI():
 
             # "CT" -> set todo_state to done (check todos)
             elif message[0] == "CT":
-                self.routes["Home"].todo_list_vis.todo_list_blocks[message[1]].remove_todos([message[2][3]])
+                self.routes["Home"].todo_list_vis.todo_list_blocks[message[1]].remove_todos([message[2][4]])
 
         # 404 => Active Todos
         elif message_code == 404:
@@ -271,8 +270,13 @@ class GUI():
 
         # 405 => Update scheduling todos button label
         elif message_code == 405:
-            self.routes["Home"].schedule_todos.set_color([100, 100, 100])
-            self.routes["Home"].schedule_todos_label.set_text(message)
+            if message != "Schedule Todos":
+                self.routes["Home"].schedule_todos.set_color([100, 100, 100])
+                self.routes["Home"].schedule_todos_label.set_text(message)
+
+            else:
+                self.routes["Home"].schedule_todos.set_color([83, 191, 102])
+                self.routes["Home"].schedule_todos_label.set_text(message)
 
         # --- 600 -> close program --- #
         # 602 => end program

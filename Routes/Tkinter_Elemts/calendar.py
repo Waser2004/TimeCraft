@@ -24,6 +24,8 @@ class Calendar(object):
         self.text_color = text_color
         self.secondary_color = secondary_color
 
+        self.dispatch_message = None
+
         # calendar
         self.calendars = {}
         self.appointment_ids = []
@@ -31,6 +33,7 @@ class Calendar(object):
         self.appointment_backgrounds = []
         self.appointment_time_labels = []
         self.appointment_name_labels = []
+        self.appointment_lock_images = []
 
         # calendar settings variables
         self.viewed_days_amount = 1
@@ -43,7 +46,19 @@ class Calendar(object):
         self.reset_button_back = rectangle.Rectangle(self.canvas, [self.corner_2[0] - 40, self.corner_2[1] - 50], [self.corner_2[0] - 10, self.corner_2[1] - 20], 4, secondary_color, 0, [0, 0, 0])
         self.reset_button_img = image.Tk_Image(self.canvas, [self.corner_2[0] - 24, self.corner_2[1] - 34], "Assets/reset.png", "center")
 
-        # pop-up
+        # order update popup
+        self.hover_pop_up_state = False
+        self.hover_id = None
+        self.hover_appointment_id = None
+
+        self.hover_background = None
+        self.hover_arrow_up_1 = None
+        self.hover_arrow_up_2 = None
+        self.hover_arrow_down_1 = None
+        self.hover_arrow_down_2 = None
+        self.hover_lock_img = None
+
+        # appointment info pop-up
         self.pop_up_state = False
         self.pop_up_ids = None
         self.pop_up_width = 300
@@ -85,6 +100,9 @@ class Calendar(object):
 
         self.canvas.after(60000, self.__update_time_indicator_loop)
 
+    def set_backend_connection(self, backend_connection):
+        self.dispatch_message = backend_connection
+
     # ------------------------
     # calendar setting updates
     # ------------------------
@@ -93,8 +111,9 @@ class Calendar(object):
 
         self.update()
 
-    def update_calendar(self, calendar_name, appointments):
+    def update_calendar(self, calendar_name, appointments, locks):
         self.calendars[calendar_name]["appointments"] = appointments
+        self.calendars[calendar_name]["locks"] = locks
 
         self.update()
 
@@ -280,6 +299,9 @@ class Calendar(object):
         for na in self.appointment_name_labels:
             na.draw()
 
+        for lo in self.appointment_lock_images:
+            lo.draw()
+
         for ti in self.appointment_time_labels:
             ti.draw()
 
@@ -303,6 +325,10 @@ class Calendar(object):
         # draw pop up
         if self.pop_up_state:
             self.draw_pop_up()
+
+        # draw hover pop_up
+        if self.hover_pop_up_state:
+            self.draw_hover_pop_up()
 
     def draw_pop_up(self):
         # draw
@@ -348,6 +374,8 @@ class Calendar(object):
             bg.delete()
         for na in self.appointment_name_labels:
             na.delete()
+        for lo in self.appointment_lock_images:
+            lo.delete()
         for ti in self.appointment_time_labels:
             ti.delete()
 
@@ -361,6 +389,10 @@ class Calendar(object):
         # current time line
         if self.current_time_line is not None:
             self.current_time_line.delete()
+
+        # delete hover pop-up
+        if self.hover_pop_up_state is False:
+            self.delete_hover_pop_up()
 
     # check if time string is valid
     def check_start_time_string(self, prev_str, new_str):
@@ -423,6 +455,99 @@ class Calendar(object):
             else:
                 return [time(0), time(17)]
 
+    def create_hover_pop_up(self):
+        if self.hover_appointment_id < len(self.appointment_backgrounds):
+            corner_1, corner_2 = self.appointment_backgrounds[self.hover_appointment_id].corner_1, self.appointment_backgrounds[self.hover_appointment_id].corner_2
+
+            x = corner_2[0] + 10
+            y = corner_1[1] + (corner_2[1] - corner_1[1]) / 2 - 30
+            # create canvas elements
+            if self.hover_background is None:
+                self.hover_background = rectangle.Rectangle(self.canvas, [x, y], [x + 20, y + 60], 8, [83, 191, 102], 0, [0, 0, 0])
+                self.hover_arrow_up_1 = line.Line(self.canvas, [x + 5, y + 13], [x + 10, y + 8], [230, 230, 230], 1)
+                self.hover_arrow_up_2 = line.Line(self.canvas, [x + 10, y + 8], [x + 16, y + 14], [230, 230, 230], 1)
+                self.hover_arrow_down_1 = line.Line(self.canvas, [x + 5, y + 28], [x + 10, y + 33], [230, 230, 230], 1)
+                self.hover_arrow_down_2 = line.Line(self.canvas, [x + 10, y + 33], [x + 16, y + 27], [230, 230, 230], 1)
+                self.hover_lock_img = image.Tk_Image(self.canvas, [x + 11 ,y + 50], "Assets/lock.png", anchor="center")
+            # update canvas elements
+            else:
+                self.hover_background.set_pos([x, y], [x + 20, y + 60])
+                self.hover_arrow_up_1.set_pos([x + 5, y + 13], [x + 10, y + 8])
+                self.hover_arrow_up_2.set_pos([x + 10, y + 8], [x + 16, y + 14])
+                self.hover_arrow_down_1.set_pos([x + 5, y + 28], [x + 10, y + 33])
+                self.hover_arrow_down_2.set_pos([x + 10, y + 33], [x + 16, y + 27])
+                self.hover_lock_img.set_center([x + 11 ,y + 50])
+
+        else:
+            self.delete_hover_pop_up()
+
+    def draw_hover_pop_up(self):
+        if self.hover_background is not None:
+            self.hover_background.draw()
+            self.hover_arrow_up_1.draw()
+            self.hover_arrow_up_2.draw()
+            self.hover_arrow_down_1.draw()
+            self.hover_arrow_down_2.draw()
+            self.hover_lock_img.draw()
+
+            self.canvas.tag_raise(self.hover_background.object)
+            self.canvas.tag_raise(self.hover_arrow_up_1.object)
+            self.canvas.tag_raise(self.hover_arrow_up_2.object)
+            self.canvas.tag_raise(self.hover_arrow_down_1.object)
+            self.canvas.tag_raise(self.hover_arrow_down_2.object)
+            self.canvas.tag_raise(self.hover_lock_img.object)
+
+    def delete_hover_pop_up(self):
+        if self.hover_background is not None:
+            self.hover_background.delete()
+            self.hover_arrow_up_1.delete()
+            self.hover_arrow_up_2.delete()
+            self.hover_arrow_down_1.delete()
+            self.hover_arrow_down_2.delete()
+            self.hover_lock_img.delete()
+
+    def update_hover_pop_up(self, event):
+        if "scheduled todos" in self.calendars:
+            hover_list = None
+
+            # check if still hovering over the previous appointment
+            if self.hover_pop_up_state and len(self.appointment_backgrounds) > self.hover_appointment_id:
+                hover_list = [
+                    self.appointment_backgrounds[self.hover_appointment_id].is_pressed(event.x, event.y),
+                    self.appointment_backgrounds[self.hover_appointment_id].is_pressed(event.x - 30, event.y),
+                    self.hover_background.is_pressed(event.x, event.y),
+                    self.hover_background.is_pressed(event.x + 15,event.y)
+                ]
+
+            # no longer hovering over previous appointment or no previous appointment existing
+            if (hover_list and hover_list.count(True) == 0) or hover_list is None:
+                # hovering over new schedule todo_appointment
+                for i, back in enumerate(self.appointment_backgrounds):
+                    if self.appointment_ids[i][0] == "scheduled todos" and (back.is_pressed(event.x, event.y) or back.is_pressed(event.x - 30, event.y)):
+                        self.hover_pop_up_state = True
+                        self.hover_appointment_id = i
+                        self.hover_id = self.appointment_ids[i]
+
+                        break
+                # Mouse does not hover over any appointments of the "scheduled todo_" calendar.
+                else:
+                    self.hover_pop_up_state = False
+                    self.hover_appointment_id = None
+                    self.hover_id = None
+
+            # create and draw hover pop-up
+            if self.hover_pop_up_state:
+                self.create_hover_pop_up()
+
+                if self.draw_state:
+                    self.draw()
+
+            # delete hover pop-up
+            else:
+                self.delete_hover_pop_up()
+
+    def mouse_movement(self, event):
+        self.update_hover_pop_up(event)
 
     def mouse_wheel(self, event):
         if self.corner_1[0] < event.x < self.corner_2[0] and self.corner_1[1] < event.y < self.corner_2[1]:
@@ -469,7 +594,11 @@ class Calendar(object):
                 self.reset_button_back.delete()
                 self.reset_button_img.delete()
 
+            # update screen
             self.update()
+
+            # update hover pop-up
+            self.update_hover_pop_up(event)
 
     # is pressed
     def is_pressed(self, event):
@@ -480,88 +609,22 @@ class Calendar(object):
 
             # no pop up
             if not self.pop_up_state:
-                # check if an appointment ist pressed
-                for i, back in enumerate(self.appointment_backgrounds):
-                    if back.is_pressed(event.x, event.y):
-                        # update variables
-                        self.pop_up_state = True
-                        self.pop_up_ids = self.appointment_ids[i]
+                # hover pop_up pressed
+                if self.hover_pop_up_state and self.hover_background.is_pressed(event.x, event.y):
+                    # arrow up pressed
+                    if event.y - self.hover_background.corner_1[1] <= 20:
+                        self.dispatch_message(406, ["MU", self.calendars[self.hover_id[0]]["appointments"][self.hover_id[1]][4]])
 
+                    # arrow down pressed
+                    elif event.y - self.hover_background.corner_1[1] <= 40:
+                        self.dispatch_message(406, ["MD", self.calendars[self.hover_id[0]]["appointments"][self.hover_id[1]][4]])
 
-                        # appointment parameters
-                        name = self.calendars[self.appointment_ids[i][0]]["appointments"][self.appointment_ids[i][1]][0]
-                        start_time = self.calendars[self.appointment_ids[i][0]]["appointments"][self.appointment_ids[i][1]][1]
-                        end_time = self.calendars[self.appointment_ids[i][0]]["appointments"][self.appointment_ids[i][1]][2]
-                        location = self.calendars[self.appointment_ids[i][0]]["appointments"][self.appointment_ids[i][1]][3]
-
-                        if location is None:
-                            location = ""
-
-                        # colors
-                        color = self.calendars[self.appointment_ids[i][0]]["color"]
-                        outline_color = [round(color[0] * 0.8), round(color[1] * 0.8), round(color[2] * 0.8)]
-                        label_color = [round(color[0] * 0.65), round(color[1] * 0.65), round(color[2] * 0.65)]
-
-
-                        # create elements
-                        if self.pop_up_background is None:
-                            self.pop_up_background = rectangle.Rectangle(self.canvas, [floor(x_pos), floor(y_pos)], [floor(x_pos + self.pop_up_width), floor(y_pos + 240)], 10, color, 1, outline_color)
-                            self.pop_up_name_entry = entry.Entry(self.root, self.canvas, name, [x_pos + 20, y_pos + 20], self.pop_up_width - 90, color, self.text_color, 20, bind=self.editable)
-                            self.pop_up_calendar_label = text.Text(self.canvas, self.appointment_ids[i][0], [x_pos + 20, y_pos + 50], label_color, 10, anchor="nw")
-                            self.pop_up_start_label = text.Text(self.canvas, "Starting time: ", [x_pos + 20, y_pos + 100], label_color, 15, anchor="nw")
-                            self.pop_up_start_entry = entry.Entry(self.root, self.canvas, start_time.strftime('%d.%m.%Y %H:%M'), [x_pos + 140, y_pos + 100], self.pop_up_width - 160, color, self.text_color, 15, bind=self.editable)
-                            self.pop_up_end_label = text.Text(self.canvas, "Ending time:", [x_pos + 20, y_pos + 135],label_color, 15, anchor="nw")
-                            self.pop_up_end_entry = entry.Entry(self.root, self.canvas, end_time.strftime('%d.%m.%Y %H:%M'),[x_pos + 140, y_pos + 135], self.pop_up_width - 160, color, self.text_color, 15, bind=self.editable)
-                            self.pop_up_location_label = text.Text(self.canvas, "Location:", [x_pos + 20, y_pos + 170],label_color, 15, anchor="nw")
-                            self.pop_up_location_entry = entry.Entry(self.root, self.canvas, location, [x_pos + 140, y_pos + 170], self.pop_up_width - 160, color, self.text_color, 15, placeholder="No Location", bind=self.editable)
-                            self.pop_up_cross_p1 = line.Line(self.canvas, [x_pos + self.pop_up_width - 40, y_pos + 20], [x_pos + self.pop_up_width - 20, y_pos + 40], label_color, 2)
-                            self.pop_up_cross_p2 = line.Line(self.canvas, [x_pos + self.pop_up_width - 20, y_pos + 20], [x_pos + self.pop_up_width - 40, y_pos + 40], label_color, 2)
-
-                            self.pop_up_start_entry.bind_change = lambda x: self.check_start_time_string(start_time.strftime('%d.%m.%Y %H:%M'), x)
-                            self.pop_up_end_entry.bind_change = lambda x: self.check_end_time_string(end_time.strftime('%d.%m.%Y %H:%M'), x)
-                        # update elements
-                        else:
-                            # update position
-                            self.update_pop_up_pos()
-
-                            # update content
-                            self.pop_up_background.set_color(color)
-                            self.pop_up_background.set_outline_color(outline_color)
-
-                            self.pop_up_name_entry.set_text(name)
-                            self.pop_up_name_entry.set_background_color(color)
-
-                            self.pop_up_calendar_label.set_text(self.appointment_ids[i][0])
-                            self.pop_up_calendar_label.set_color(label_color)
-
-                            self.pop_up_start_label.set_color(label_color)
-
-                            self.pop_up_start_entry.set_text(start_time.strftime('%d.%m.%Y %H:%M'))
-                            self.pop_up_start_entry.set_background_color(color)
-
-                            self.pop_up_end_label.set_color(label_color)
-
-                            self.pop_up_end_entry.set_text(end_time.strftime('%d.%m.%Y %H:%M'))
-                            self.pop_up_end_entry.set_background_color(color)
-
-                            self.pop_up_location_label.set_color(label_color)
-
-                            self.pop_up_location_entry.set_text(location)
-                            self.pop_up_location_entry.set_background_color(color)
-
-                            self.pop_up_cross_p1.set_color(label_color)
-                            self.pop_up_cross_p2.set_color(label_color)
-
-                            # update bind functions
-                            self.pop_up_start_entry.bind_change = lambda x: self.check_start_time_string(start_time.strftime('%d.%m.%Y %H:%M'), x)
-                            self.pop_up_end_entry.bind_change = lambda x: self.check_end_time_string(end_time.strftime('%d.%m.%Y %H:%M'), x)
-
-                        self.draw_pop_up()
-
-                        break
+                    # lock pressed
+                    else:
+                        self.dispatch_message(406, ["LO", self.calendars[self.hover_id[0]]["appointments"][self.hover_id[1]][4]])
 
                 # reset button pressed
-                if self.reset_button_state and self.reset_button_back.is_pressed(event.x, event.y):
+                elif self.reset_button_state and self.reset_button_back.is_pressed(event.x, event.y):
                     self.reset_button_state = False
 
                     self.reset_button_back.delete()
@@ -570,6 +633,88 @@ class Calendar(object):
                     self.time_span = self.get_current_time_frame()
 
                     self.update()
+
+                # check if an appointment ist pressed
+                else:
+                    for i, back in enumerate(self.appointment_backgrounds):
+                        if back.is_pressed(event.x, event.y):
+                            # update variables
+                            self.pop_up_state = True
+                            self.pop_up_ids = self.appointment_ids[i]
+
+
+                            # appointment parameters
+                            name = self.calendars[self.appointment_ids[i][0]]["appointments"][self.appointment_ids[i][1]][0]
+                            start_time = self.calendars[self.appointment_ids[i][0]]["appointments"][self.appointment_ids[i][1]][1]
+                            end_time = self.calendars[self.appointment_ids[i][0]]["appointments"][self.appointment_ids[i][1]][2]
+                            location = self.calendars[self.appointment_ids[i][0]]["appointments"][self.appointment_ids[i][1]][3]
+
+                            if location is None:
+                                location = ""
+
+                            # colors
+                            color = self.calendars[self.appointment_ids[i][0]]["color"]
+                            outline_color = [round(color[0] * 0.8), round(color[1] * 0.8), round(color[2] * 0.8)]
+                            label_color = [round(color[0] * 0.65), round(color[1] * 0.65), round(color[2] * 0.65)]
+
+
+                            # create elements
+                            if self.pop_up_background is None:
+                                self.pop_up_background = rectangle.Rectangle(self.canvas, [floor(x_pos), floor(y_pos)], [floor(x_pos + self.pop_up_width), floor(y_pos + 240)], 10, color, 1, outline_color)
+                                self.pop_up_name_entry = entry.Entry(self.root, self.canvas, name, [x_pos + 20, y_pos + 20], self.pop_up_width - 90, color, self.text_color, 20, bind=self.editable)
+                                self.pop_up_calendar_label = text.Text(self.canvas, self.appointment_ids[i][0], [x_pos + 20, y_pos + 50], label_color, 10, anchor="nw")
+                                self.pop_up_start_label = text.Text(self.canvas, "Starting time: ", [x_pos + 20, y_pos + 100], label_color, 15, anchor="nw")
+                                self.pop_up_start_entry = entry.Entry(self.root, self.canvas, start_time.strftime('%d.%m.%Y %H:%M'), [x_pos + 140, y_pos + 100], self.pop_up_width - 160, color, self.text_color, 15, bind=self.editable)
+                                self.pop_up_end_label = text.Text(self.canvas, "Ending time:", [x_pos + 20, y_pos + 135],label_color, 15, anchor="nw")
+                                self.pop_up_end_entry = entry.Entry(self.root, self.canvas, end_time.strftime('%d.%m.%Y %H:%M'),[x_pos + 140, y_pos + 135], self.pop_up_width - 160, color, self.text_color, 15, bind=self.editable)
+                                self.pop_up_location_label = text.Text(self.canvas, "Location:", [x_pos + 20, y_pos + 170],label_color, 15, anchor="nw")
+                                self.pop_up_location_entry = entry.Entry(self.root, self.canvas, location, [x_pos + 140, y_pos + 170], self.pop_up_width - 160, color, self.text_color, 15, placeholder="No Location", bind=self.editable)
+                                self.pop_up_cross_p1 = line.Line(self.canvas, [x_pos + self.pop_up_width - 40, y_pos + 20], [x_pos + self.pop_up_width - 20, y_pos + 40], label_color, 2)
+                                self.pop_up_cross_p2 = line.Line(self.canvas, [x_pos + self.pop_up_width - 20, y_pos + 20], [x_pos + self.pop_up_width - 40, y_pos + 40], label_color, 2)
+
+                                self.pop_up_start_entry.bind_change = lambda x: self.check_start_time_string(start_time.strftime('%d.%m.%Y %H:%M'), x)
+                                self.pop_up_end_entry.bind_change = lambda x: self.check_end_time_string(end_time.strftime('%d.%m.%Y %H:%M'), x)
+                            # update elements
+                            else:
+                                # update position
+                                self.update_pop_up_pos()
+
+                                # update content
+                                self.pop_up_background.set_color(color)
+                                self.pop_up_background.set_outline_color(outline_color)
+
+                                self.pop_up_name_entry.set_text(name)
+                                self.pop_up_name_entry.set_background_color(color)
+
+                                self.pop_up_calendar_label.set_text(self.appointment_ids[i][0])
+                                self.pop_up_calendar_label.set_color(label_color)
+
+                                self.pop_up_start_label.set_color(label_color)
+
+                                self.pop_up_start_entry.set_text(start_time.strftime('%d.%m.%Y %H:%M'))
+                                self.pop_up_start_entry.set_background_color(color)
+
+                                self.pop_up_end_label.set_color(label_color)
+
+                                self.pop_up_end_entry.set_text(end_time.strftime('%d.%m.%Y %H:%M'))
+                                self.pop_up_end_entry.set_background_color(color)
+
+                                self.pop_up_location_label.set_color(label_color)
+
+                                self.pop_up_location_entry.set_text(location)
+                                self.pop_up_location_entry.set_background_color(color)
+
+                                self.pop_up_cross_p1.set_color(label_color)
+                                self.pop_up_cross_p2.set_color(label_color)
+
+                                # update bind functions
+                                self.pop_up_start_entry.bind_change = lambda x: self.check_start_time_string(start_time.strftime('%d.%m.%Y %H:%M'), x)
+                                self.pop_up_end_entry.bind_change = lambda x: self.check_end_time_string(end_time.strftime('%d.%m.%Y %H:%M'), x)
+
+                            self.draw_pop_up()
+
+                            break
+
             # pop-up is active
             else:
                 if not self.pop_up_background.is_pressed(event.x, event.y):
@@ -597,17 +742,23 @@ class Calendar(object):
         self.pop_up_cross_p2.set_pos([x_pos + self.pop_up_width - 20, y_pos + 20], [x_pos + self.pop_up_width - 40, y_pos + 40])
 
     def update(self):
+        # create calendar elements
         self.create_time_indicators()
         self.create_date_labels()
         self.create_calendar_appointments()
         self.create_current_time_indication_line()
 
+        # reset button
         self.reset_button_back.set_pos([self.corner_2[0] - 40, self.corner_2[1] - 50], [self.corner_2[0] - 10, self.corner_2[1] - 20])
         self.reset_button_img.set_center([self.corner_2[0] - 24, self.corner_2[1] - 34])
 
         # update popup
         if self.pop_up_state:
             self.update_pop_up_pos()
+
+        # update hover pop up
+        if self.hover_pop_up_state:
+            self.create_hover_pop_up()
 
         if self.draw_state:
             self.draw()
@@ -639,6 +790,7 @@ class Calendar(object):
         self.pop_up_ids = None
 
         self.create_calendar_appointments()
+
         if self.draw_state:
             self.draw()
 
@@ -806,6 +958,7 @@ class Calendar(object):
         # -----------------------------
         background_counter = 0
         time_label_counter = 0
+        lock_counter = 0
         for i, app in enumerate(appointments):
             # get app height
             height = self.corner_2[1] - self.corner_1[1] - 60
@@ -859,6 +1012,21 @@ class Calendar(object):
             else:
                 label_y_pos = y_pos
                 font_size = app_height if app_height >= 3 else 0
+
+            # --- lock symbol --- #
+            if app.calendar_name == "scheduled todos" and font_size >= 10:
+                index = [app[0] for app in self.calendars[app.calendar_name]["appointments"]].index(app.appointment[0])
+
+                # create lock symbol
+                if len(self.calendars[app.calendar_name]["locks"]) == len(self.calendars[app.calendar_name]["appointments"]) and self.calendars[app.calendar_name]["locks"][index]:
+                    if len(self.appointment_lock_images) > lock_counter:
+                        self.appointment_lock_images[lock_counter].set_center([label_x_pos, label_y_pos + 1])
+
+                    else:
+                        self.appointment_lock_images.append(image.Tk_Image(self.canvas, [label_x_pos, label_y_pos + 1], "Assets/lock.png", anchor="nw"))
+
+                    lock_counter += 1
+                    label_x_pos += 15
 
             # shorten name if needed
             font = Font(family="HarmonyOS Sans SC", size=-floor(font_size))
@@ -935,6 +1103,10 @@ class Calendar(object):
         while time_label_counter < len(self.appointment_time_labels):
             self.appointment_time_labels[time_label_counter].delete()
             self.appointment_time_labels.pop(time_label_counter)
+
+        while lock_counter < len(self.appointment_lock_images):
+            self.appointment_lock_images[lock_counter].delete()
+            self.appointment_lock_images.pop(lock_counter)
 
     @staticmethod
     def get_intersecting_apps(app, calender_apps):

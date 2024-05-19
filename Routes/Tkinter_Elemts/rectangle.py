@@ -153,39 +153,48 @@ class Rectangle(object):
 
     # check if it is pressed
     def is_pressed(self, x: int, y: int) -> bool:
+        corner_1 = [self.corner_1[0] - 1, self.corner_1[1] - 1]
+        corner_2 = [self.corner_2[0] + 1, self.corner_2[1] + 1]
+
         # is probably pressed
-        if self.corner_1[0] <= x <= self.corner_2[0] and self.corner_1[1] <= y <= self.corner_2[1]:
+        if corner_1[0] <= x <= corner_2[0] and corner_1[1] <= y <= corner_2[1]:
             # no corner radius
             if self.corner_radius <= 1:
                 return True
             # left side
-            elif self.corner_1[0] <= x <= self.corner_1[0] + self.corner_radius:
+            elif corner_1[0] <= x <= corner_1[0] + self.corner_radius:
                 # click in top left corner
-                if self.corner_1[1] <= y <= self.corner_1[1] + self.corner_radius:
-                    center = [self.corner_1[0] + self.corner_radius, self.corner_1[1] + self.corner_radius]
+                if corner_1[1] <= y <= corner_1[1] + self.corner_radius:
+                    center = [corner_1[0] + self.corner_radius, corner_1[1] + self.corner_radius]
                     if sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2) <= self.corner_radius:
                         return True
                     return False
                 # click in bottom left corner
-                elif self.corner_2[1] - self.corner_radius <= y <= self.corner_2[1]:
-                    center = [self.corner_1[0] + self.corner_radius, self.corner_2[1] - self.corner_radius]
+                elif corner_2[1] - self.corner_radius <= y <= corner_2[1]:
+                    center = [corner_1[0] + self.corner_radius, corner_2[1] - self.corner_radius]
                     if sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2) <= self.corner_radius:
                         return True
                     return False
+                # click between top and bottom left corner
+                else:
+                    return True
             # right side
-            elif self.corner_2[0] <= x <= self.corner_2[0] + self.corner_radius:
+            elif corner_2[0] <= x <= corner_2[0] + self.corner_radius:
                 # click in top right corner
-                if self.corner_1[1] <= y <= self.corner_1[1] + self.corner_radius:
-                    center = [self.corner_1[0] + self.corner_radius, self.corner_2[1] - self.corner_radius]
+                if corner_1[1] <= y <= corner_1[1] + self.corner_radius:
+                    center = [corner_1[0] + self.corner_radius, corner_2[1] - self.corner_radius]
                     if sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2) <= self.corner_radius:
                         return True
                     return False
                 # click in bottom right corner
-                elif self.corner_2[1] - self.corner_radius <= y <= self.corner_2[1]:
-                    center = [self.corner_2[0] - self.corner_radius, self.corner_2[1] - self.corner_radius]
+                elif corner_2[1] - self.corner_radius <= y <= corner_2[1]:
+                    center = [corner_2[0] - self.corner_radius, corner_2[1] - self.corner_radius]
                     if sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2) <= self.corner_radius:
                         return True
                     return False
+                # click between top and bottom right corner
+                else:
+                    return True
             # rest of the rectangle
             else:
                 return True

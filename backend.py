@@ -21,9 +21,16 @@ class Backend(object):
         # frontend connections
         self.dispatch_message = None
 
+        # data
+        self.todos = {}
+        self.retrieved_calendars = {}
+
         # genetic algorithm
-        self.genetic_algorithm = Genetic_Algorithm([], [])
+        self.genetic_algorithm = Genetic_Algorithm({}, [])
         self.todo_calendar = []
+        self.todo_order = []
+        self.locked_todos = []
+        self.todo_calendar_locks = []
         self.done_todo_calendar = []
 
         # calendar names and todolist notion ids
@@ -192,6 +199,9 @@ class Backend(object):
         # update statuses
         self.dispatch_message(101, [self.google_calendar_connection_status, self.google_calendar_statuses])
 
+        # set calendars
+        self.retrieved_calendars = copy.deepcopy(appointments)
+
         return appointments
 
     def get_todos(self):
@@ -236,33 +246,283 @@ class Backend(object):
                 todos.pop(key)
 
         # check state of active todo_
-        for todo in self.todo_calendar:
-            if self.todo_lists[list(self.todo_lists.keys())[0]].get_todo_status(todo[4]) == "Done":
-                todo = [todo[0], None, None, todo[4]]
+        for key, todo in self.todos.items():
+            if todo["todo states"]["active"] and todo["properties"]["status"] != "Done":
+                if self.todo_lists[todo["todo list"]].get_todo_status(key) == "Done":
+                    todo = [todo["properties"]["name"], None, None, "Done", key]
 
-                # create thread to for updating schedule
-                thread = threading.Thread(target=lambda : self.update_schedule_calendar_for_done_todo(todo), daemon=True)
-                thread.start()
+                    # create thread to for updating schedule
+                    thread = threading.Thread(target=lambda : self.update_schedule_calendar_for_done_todo(todo), daemon=True)
+                    thread.start()
 
-                self.threads.update({f"schedule todos for done todo {todo[0]}": thread})
+                    self.threads.update({f"schedule todos for done todo {todo[0]}": thread})
 
-                # logging threads
-                self.thread_logger.info(f"started:    [schedule todos for done todo {todo[0]}] - currently {threading.active_count()} threads open")
+                    # logging threads
+                    self.thread_logger.info(f"started:    [schedule todos for done todo {todo[0]}] - currently {threading.active_count()} threads open")
 
-                break
+                    break
 
         # update statuses
         self.dispatch_message(202, self.todo_list_status)
 
+        # update todos variable
+        for todo_list_key, todo_list in todos.items():
+            for todo in todo_list:
+                if not todo[4] in self.todos:
+                    # add new todo_to todos variable
+                    self.todos.update({
+                        todo[4]: {
+                            "todo list": todo_list_key,
+                            "properties": {
+                                "name": todo[0],
+                                "estimated time": todo[1],
+                                "extra time": 0,
+                                "elapsed duration": 0,
+                                "priority": todo[2],
+                                "status": todo[3]
+                            },
+                            "todo states": {
+                                "active": False,
+                                "locked": False,
+                                "hidden": False,
+                            },
+                            "order index": None,
+                            "appointments": None
+                        }
+                    })
+                # update properties
+                else:
+                    self.todos[todo[4]]["properties"].update({
+                        "name": todo[0],
+                        "estimated time": todo[1],
+                        "priority": todo[2],
+                        "status": todo[3]
+                    })
+
+        # send todos to home.py
+        self.dispatch_message(401, todos)
+
         return todos
 
-    def schedule_todos(self, start_time = datetime.now()):
+    def retime_todos(self, start_time):
+        # clean todos
+        self.genetic_algorithm.set_tasks(self.todos)
+        todos = sorted(copy.deepcopy(self.genetic_algorithm.todos), key=lambda x: x[1]["order index"])
+        locked_todos = copy.deepcopy(self.genetic_algorithm.locked_todos)
+
+        # clean up appointments
+        appointments = []
+        for _, calendar in self.retrieved_calendars.items():
+            appointments += calendar
+
+        appointments = sorted(appointments, key=lambda x: x[1])
+
+        # get timed tasks
+        return self.genetic_algorithm.calculate_task_times(locked_todos + todos, appointments, start_time)
+
+
+    def move_scheduled_todo_up(self, todo_id):
+        # bring todos into the right order
+        ordered_todos = sorted([[key, todo] for key, todo in self.todos.items() if todo["order index"] is not None], key=lambda x: x[1]["order index"])
+
+        # rearrange order indexes only if index is not 0
+        if (index := self.todos[todo_id]["order index"]) > 0:
+
+            if index == 1:
+                # update active todo_
+                self.set_active_todo([self.todos[todo_id]["todo list"], todo_id])
+
+                # split up prev todo_appointment when more than five minutes have passed
+                now = datetime.now().replace(second=0, microsecond=0)
+                if (prev_dur := (now - self.todos[ordered_todos[0][0]]["appointments"][-1][0]).total_seconds()) >= 300:
+                    self.todos[ordered_todos[0][0]]["appointments"][-1][1] = now
+                    self.todos[ordered_todos[0][0]]["appointments"].append([now, now])
+
+                    self.todos[ordered_todos[0][0]]["properties"]["elapsed duration"] += prev_dur / 3600
+
+            # update order indexes
+            self.todos[ordered_todos[index][0]]["order index"] -= 1
+            self.todos[ordered_todos[index - 1][0]]["order index"] += 1
+
+            # lock todos
+            for i, todo in enumerate(ordered_todos):
+                if not ordered_todos[i + 1][0] == todo_id:
+                    self.todos[todo[0]]["todo states"]["locked"] = True
+
+                else:
+                    self.todos[todo_id]["todo states"]["locked"] = True
+                    break
+
+            # calculate timed tasks
+            timed_todos = self.retime_todos(datetime.now() if index == 1 else ordered_todos[0][1]["appointments"][-1][0])
+
+            # assign appointments to todos
+            for i, app in enumerate(timed_todos):
+                self.todos[app[0]]["order index"] = i
+
+                # todo_with now appointments
+                if self.todos[app[0]]["appointments"] is None:
+                    self.todos[app[0]]["appointments"] = [[app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]]
+
+                # todo_with existing appointment
+                else:
+                    self.todos[app[0]]["appointments"][-1] = [app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]
+
+            # merge appointments if possible
+            if len(self.todos[todo_id]["appointments"]) > 1:
+                app_1 = self.todos[todo_id]["appointments"][-2]
+                app_2 =self.todos[todo_id]["appointments"][-1]
+
+                # merge if time between two appointments is lower than 5min
+                if 0 <= (time_between := (app_2[0] - app_1[1]).total_seconds()) <= 300:
+                    # remove duration of first todo_appointment form elapsed time list
+                    self.todos[todo_id]["properties"]["elapsed duration"] -= (app_1[1] - app_1[0]).total_seconds() / 3600
+
+                    # merge todos
+                    self.todos[todo_id]["appointments"][-2][1] = app_2[1]
+                    self.todos[todo_id]["appointments"].pop(-1)
+                    self.todos[todo_id]["properties"]["extra time"] += time_between / 3600
+
+            # send new scheduled todo_calendar to frontend
+            self.dispatch_message(402, {"scheduled todos": self.get_todo_calendar()})
+
+    def move_scheduled_todo_down(self, todo_id):
+        # bring todos into the right order
+        ordered_todos = sorted([[key, todo] for key, todo in self.todos.items() if todo["order index"] is not None], key=lambda x: x[1]["order index"])
+
+        # rearrange order indexes only if todo_is not last in list
+        if (index := self.todos[todo_id]["order index"]) < len(ordered_todos) - 1:
+
+            # split appointment if prev duration was more than 5min
+            if index == 0:
+                # update active todo_
+                self.set_active_todo([self.todos[ordered_todos[index + 1][0]]["todo list"], ordered_todos[index + 1][0]])
+
+                # split up prev todo_appointment when more than five minutes have passed
+                now = datetime.now().replace(second=0, microsecond=0)
+                if (prev_dur := (now - self.todos[todo_id]["appointments"][-1][0]).total_seconds()) >= 300:
+                    self.todos[todo_id]["appointments"][-1][1] = now
+                    self.todos[todo_id]["appointments"].append([now, now])
+
+                    self.todos[todo_id]["properties"]["elapsed duration"] += prev_dur / 3600
+
+            # update order indexes
+            self.todos[ordered_todos[index][0]]["order index"] += 1
+            self.todos[ordered_todos[index + 1][0]]["order index"] -= 1
+
+            # lock todos
+            for i, todo in enumerate(ordered_todos):
+                self.todos[todo[0]]["todo states"]["locked"] = True
+
+                if ordered_todos[i][0] == todo_id:
+                    self.todos[ordered_todos[i + 1][0]]["todo states"]["locked"] = True
+                    break
+
+            # calculate timed tasks
+            timed_todos = self.retime_todos(datetime.now() if index == 0 else ordered_todos[0][1]["appointments"][-1][0])
+
+            # assign appointments to todos
+            for i, app in enumerate(timed_todos):
+                self.todos[app[0]]["order index"] = i
+
+                # todo_with now appointments
+                if self.todos[app[0]]["appointments"] is None:
+                    self.todos[app[0]]["appointments"] = [[app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]]
+
+                # todo_with existing appointment
+                else:
+                    self.todos[app[0]]["appointments"][-1] = [app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]
+
+            # merge appointments if possible
+            if len(self.todos[ordered_todos[index + 1][0]]["appointments"]) > 1:
+                ref_todo_id = ordered_todos[index + 1][0]
+                app_1 = self.todos[ref_todo_id]["appointments"][-2]
+                app_2 = self.todos[ref_todo_id]["appointments"][-1]
+
+                # merge if time between two appointments is lower than 5min
+                if 0 <= (time_between := (app_2[0] - app_1[1]).total_seconds()) <= 300:
+                    # remove duration of first todo_appointment form elapsed time list
+                    self.todos[ref_todo_id]["properties"]["elapsed duration"] -= (app_1[1] - app_1[0]).total_seconds() / 3600
+
+                    # merge todos
+                    self.todos[ref_todo_id]["appointments"][-2][1] = app_2[1]
+                    self.todos[ref_todo_id]["appointments"].pop(-1)
+                    self.todos[ref_todo_id]["properties"]["extra time"] += time_between / 3600
+
+            # send new scheduled todo_calendar to frontend
+            self.dispatch_message(402, {"scheduled todos": self.get_todo_calendar()})
+
+    def lock_todo(self, todo_id):
+        # bring todos into the right order
+        ordered_todos = sorted([[key, todo] for key, todo in self.todos.items() if todo["order index"] is not None], key = lambda x: x[1]["order index"])
+
+        # unlock todo_
+        if self.todos[todo_id]["todo states"]["locked"]:
+            for todo in reversed(ordered_todos):
+                # unlock todos that come before locked todo_
+                self.todos[todo[0]]["todo states"]["locked"] = False
+
+                if todo[0] == todo_id:
+                    break
+
+        # lock todo_
+        else:
+            # get index of the todo_
+            for todo in ordered_todos:
+                # lock todos that come before locked todo_
+                self.todos[todo[0]]["todo states"]["locked"] = True
+
+                if todo[0] == todo_id:
+                    break
+
+        # calculate timed tasks
+        timed_todos = self.retime_todos(ordered_todos[0][1]["appointments"][-1][0])
+
+        # assign appointments to todos
+        for i, app in enumerate(timed_todos):
+            self.todos[app[0]]["order index"] = i
+
+            # todo_with now appointments
+            if self.todos[app[0]]["appointments"] is None:
+                self.todos[app[0]]["appointments"] = [[app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]]
+
+            # todo_with existing appointment
+            else:
+                self.todos[app[0]]["appointments"][-1] = [app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]
+
+        # send new scheduled todo_calendar to frontend
+        self.dispatch_message(402, {"scheduled todos": self.get_todo_calendar()})
+
+    def get_todo_calendar(self):
+        todo_calendar = []
+        todo_locks = []
+
+        # create appointments and lock list
+        for key, todo in self.todos.items():
+            if todo["properties"]["status"] != "Done" and todo["appointments"] is not None:
+                todo_calendar += [[todo["properties"]["name"]] + app + [""] + [key] for app in todo["appointments"]]
+                todo_locks += [todo["todo states"]["locked"] for _ in todo["appointments"]]
+
+        return todo_calendar, todo_locks
+
+    def get_locked_task_ids(self):
+        clean_calendar = []
+        for app in self.todo_calendar:
+            if clean_calendar.count(app[4]) == 0:
+                clean_calendar.append(app[4])
+
+        return [todo_id for i, todo_id in enumerate(clean_calendar) if self.locked_todos[i]]
+
+    def schedule_todos(self, start_time = None):
         # log function
         self.func_logger.info(f"[backend] - schedule todos -> {start_time}")
 
         # update Schedule todo_button
         self.dispatch_message(405, "getting todo and calendar data...")
 
+        # ############################### #
+        # get calendar and todo_list data #
+        # ############################### #
         # get appointments
         calendars = self.get_appointments([datetime.combine(datetime.today(), datetime.min.time()), datetime.today() + timedelta(days=5)])
 
@@ -272,36 +532,44 @@ class Backend(object):
             appointments += calendar
 
         # get todos
-        todo_lists = self.get_todos()
+        self.get_todos()
+        ref_todos = [0 for todo in self.todos.values() if not todo["todo states"]["hidden"]]
 
-        # clean up todo_lists
-        todos = []
-        for _, todo_list in todo_lists.items():
-            todos += todo_list
-
-        # remove still ongoing todos from list
-        if len(self.todo_calendar) > 0 and len(todos) > 0:
-            todos = [todo for todo in todos if not [left_todo[4] for left_todo in self.todo_calendar].count(todo[3])]
-
-        # only schedule todos if there are todos to be scheduled
-        if len(todos) > 0:
+        # ############## #
+        # schedule todos #
+        # ############## #
+        if len(ref_todos) > 0:
             # add appointments and todos to evaluation class
             self.genetic_algorithm.set_appointments(appointments)
-            self.genetic_algorithm.set_tasks(todos)
+            self.genetic_algorithm.set_tasks(self.todos)
 
             # update Schedule todo_button
             self.dispatch_message(405, "evaluating best todo order...")
 
             # evaluate
-            prev_cal_len = x if (x := len(self.todo_calendar) - 1) >= 0 else 0
-            self.todo_calendar += self.genetic_algorithm.evaluate(start_time)
+            timed_todos = self.genetic_algorithm.evaluate(start_time)
 
-            # round todo_calendar datetimes
-            for i, app in enumerate(self.todo_calendar):
-                self.todo_calendar[i][1] = app[1].replace(second=0, microsecond=0)
-                self.todo_calendar[i][2] = app[2].replace(second=0, microsecond=0)
+            # add appointments to todos
+            for i, app in enumerate(timed_todos):
+                self.todos[app[0]]["order index"] = i
 
-            # create thread to reschedule events at the end of the first appointment end
+                # todo_with now appointments
+                if self.todos[app[0]]["appointments"] is None:
+                    self.todos[app[0]]["appointments"] = [[app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]]
+
+                # todo_with existing appointment
+                else:
+                    self.todos[app[0]]["appointments"][-1] = [app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]
+
+            # create todo_calendar
+            self.todo_calendar = self.get_todo_calendar()[0]
+
+            # create todos list sorted by order index
+            todos = sorted([[key, todo] for key, todo in self.todos.items()], key=lambda x: (x[1]["order index"] is None, x[1]["order index"]))
+
+            # ########################################################################## #
+            # create thread to reschedule events at the end of the first appointment end #
+            # ########################################################################## #
             if "time till scheduled event ends" in self.threads:
                 self.threads["time till scheduled event ends"].cancel()
                 self.threads.pop("time till scheduled event ends")
@@ -310,7 +578,7 @@ class Backend(object):
                 self.thread_logger.info(f"canceled:   [time till scheduled event ends] -> due to scheduling events - currently {threading.active_count()} threads open")
 
             # create thread that executes before appointment ist done
-            thread = threading.Timer((self.todo_calendar[prev_cal_len][2] - datetime.now()).total_seconds(), self.update_schedule_calendar_at_event_end)
+            thread = threading.Timer((todos[0][1]["appointments"][-1][1] - datetime.now()).total_seconds(), self.update_schedule_calendar_at_event_end)
             thread.start()
 
             self.threads.update({"time till scheduled event ends": thread})
@@ -318,53 +586,67 @@ class Backend(object):
             # logging threads
             self.thread_logger.info(f"started:    [time till scheduled event ends] - currently {threading.active_count()} threads open")
 
-            # get first appointment id
-            for i, (key, todo_list) in enumerate(todo_lists.items()):
-                if [todo[3] for todo in todo_list].count(self.todo_calendar[0][4]):
-                    # set ids
-                    ids = [key, self.todo_calendar[0][4]]
+            # ################ #
+            # set active todo_ #
+            # ################ #
+            ids = [todos[0][1]["todo list"], todos[0][0]]
 
-                    # only set todo_to active if it is starting or has started already
-                    if self.todo_calendar[0][1] <= datetime.now().replace(second=0, microsecond=0):
-                        # send message
-                        self.dispatch_message(404, ids)
+            # only set todo_to active if it is starting or has started already
+            if todos[0][1]["appointments"][0][0] <= datetime.now().replace(second=0, microsecond=0):
+                self.set_active_todo(ids)
 
-                    # set time for active todo_
-                    else:
-                        # create timer
-                        thread = threading.Timer((self.todo_calendar[0][1] - datetime.now()).total_seconds(), lambda: self.dispatch_message(404, ids))
-                        thread.start()
+            # set time for active todo_
+            else:
+                # create timer
+                thread = threading.Timer((todos[0][1]["appointments"][0][0] - datetime.now()).total_seconds(), lambda: self.set_active_todo(ids))
+                thread.start()
 
-                        self.threads.update({"set active todo": thread})
+                self.threads.update({"set active todo": thread})
 
-                        # logging threads
-                        self.thread_logger.info(f"started:    [set active todo] - currently {threading.active_count()} threads open")
-
-                    break
+                # logging threads
+                self.thread_logger.info(f"started:    [set active todo] - currently {threading.active_count()} threads open")
 
         # send message that todos are scheduled
-        self.dispatch_message(402, {"done todos": self.done_todo_calendar})
-        self.dispatch_message(301, self.todo_calendar)
+        self.dispatch_message(402, {"done todos": [self.done_todo_calendar, None]})
+        self.dispatch_message(301, self.get_todo_calendar())
+
+    def set_active_todo(self, ids):
+        # send message
+        self.dispatch_message(404, ids)
+
+        # set prev active todo_to inactive
+        for todo in self.todos.values():
+            if todo["todo states"]["active"]:
+                todo["todo states"]["active"] = False
+                break
+
+        # update todo_
+        self.todos[ids[1]]["todo states"]["active"] = True
+        self.todos[ids[1]]["todo states"]["locked"] = True
 
     def send_homepy_todos(self):
         # log function
         self.func_logger.info("[backend] - send home.py todos")
 
-        self.dispatch_message(401, self.get_todos())
+        self.get_todos()
 
     def send_homepy_appointments(self, time_span):
         # log function
         self.func_logger.info(f"[backend] - send home.py appointments -> timespan: {time_span}")
 
         self.calendar_span = time_span
-        self.dispatch_message(402, self.get_appointments(self.calendar_span))
+        self.dispatch_message(402, {key: [value, None] for key, value in self.get_appointments(self.calendar_span).items()})
 
     def update_schedule_calendar_at_event_end(self):
         # log function
         self.func_logger.info("[backend] - update schedule calendar at event end")
 
-        # update calendar
-        self.todo_calendar = [todo for todo in self.todo_calendar if todo[4] == self.todo_calendar[0][4]]
+        # get active todo_
+        active_todo = None
+        for key, todo in self.todos.items():
+            if todo["todo states"]["active"]:
+                active_todo = key
+                break
 
         # get appointments
         calendars = self.get_appointments([datetime.combine(datetime.today(), datetime.min.time()), datetime.combine(datetime.today(), datetime.max.time())])
@@ -380,57 +662,56 @@ class Backend(object):
 
         # get duration to next appointment
         if len(appointments) > 0:
-            time_to_next_app = (appointments[0][1] - self.todo_calendar[-1][2]).total_seconds()
+            time_to_next_app = (appointments[0][1] - self.todos[active_todo]["appointments"][-1][1]).total_seconds()
         else:
             time_to_next_app = 301
 
-        # time increase does not intersect with appointment
-        if time_to_next_app / 60 >= 5:
-            self.todo_calendar[-1][2] += timedelta(minutes=5)
+        # give extra time for todo_
+        self.todos[active_todo]["properties"]["extra time"] += 5 / 60
 
-            # calculate schedule start time
-            schedule_start = self.todo_calendar[-1][2] + timedelta(minutes=5)
+        # add new todo_appointment if extension would intersect with the next calendar appointment
+        if not time_to_next_app / 60 >= 5:
+            # extend todo_appointment and add elapsed time
+            self.todos[active_todo]["appointments"][-1][1] += timedelta(seconds=time_to_next_app)
+            self.todos[active_todo]["properties"]["elapsed duration"] += (self.todos[active_todo]["appointments"][-1][1] - self.todos[active_todo]["appointments"][-1][0]).total_seconds() / 3600
 
-        # find spot for new task time
-        else:
-            # create task list and
-            tasks = [[self.todo_calendar[-1][0], ((5 * 60) - time_to_next_app) / 3600, 1, self.todo_calendar[-1][3], self.todo_calendar[-1][4]]]
-            self.todo_calendar[-1][2] += timedelta(seconds=time_to_next_app)
-
-            # get next possible position for task
-            timed_tasks = self.genetic_algorithm.calculate_task_times(tasks, appointments, self.todo_calendar[-1][2])
-            self.todo_calendar.append([timed_tasks[0][0], timed_tasks[0][1], timed_tasks[0][2], timed_tasks[0][3], self.todo_calendar[-1][4]])
-
-            # calculate schedule start time
-            schedule_start = self.todo_calendar[-1][2] + timedelta(minutes=5)
+            # add appointment
+            self.todos[active_todo]["appointments"].append([appointments[0][2], appointments[0][2] + timedelta(seconds=300 - time_to_next_app)])
 
         # schedule todos
-        self.genetic_algorithm.tasks.clear()
-        self.schedule_todos(schedule_start)
+        self.genetic_algorithm.todos.clear()
+        self.schedule_todos()
 
     def update_schedule_calendar_for_done_todo(self, todo):
         # log function
         self.func_logger.info(f"[backend] - update schedule calendar for done todo -> {todo}")
 
-        # put active todo_event to done todos
-        if todo[3] == self.todo_calendar[0][4]:
-            app_amount = [todo_app[4] for todo_app in self.todo_calendar].count(todo[3])
+        # remove done todo_from list
+        self.todo_lists[self.todos[todo[4]]["todo list"]].set_task_status_to_done(todo)
+        self.todos[todo[4]]["properties"]["status"] = "Done"
+        self.todos[todo[4]]["order index"] = None
 
-            if (now := datetime.now()) > self.todo_calendar[app_amount - 1][1]:
-                self.todo_calendar[app_amount - 1][2] = now
+        # send frontend that todo_is set done
+        self.dispatch_message(403, ["CT", self.todos[todo[4]]["todo list"], todo])
 
-            for i in range(app_amount):
-                self.done_todo_calendar.append(self.todo_calendar.pop(0))
+        schedule_start = datetime.now()
 
-            # update calendars
-            self.dispatch_message(402, {"done todos": self.done_todo_calendar})
-            self.dispatch_message(402, {"scheduled todos": self.todo_calendar})
+        # check if todo_was active
+        if self.todos[todo[4]]["todo states"]["active"]:
+            # update todo_appointments
+            if self.todos[todo[4]]["appointments"][-1][0] < (now := datetime.now().replace(second=0, microsecond=0)):
+                self.todos[todo[4]]["appointments"][-1][1] = now
 
-            # update calendar
-            self.todo_calendar.clear()
+            # last todo_appointment has not started jet
+            else:
+                self.todos[todo[4]]["appointments"].pop(-1)
 
-            # calculate schedule start time
-            schedule_start = datetime.now() + timedelta(minutes=5)
+            # move todo_appointments to done todo_calendar
+            name = self.todos[todo[4]]["properties"]["name"]
+            self.done_todo_calendar += [[name] + app + [""] + [todo[4]] for app in self.todos[todo[4]]["appointments"]]
+
+            # send set no todo_to be active
+            self.dispatch_message(404, None)
 
             # cancel update schedule calendar at event end thread
             if "time till scheduled event ends" in self.threads:
@@ -439,17 +720,11 @@ class Backend(object):
                 # logging threads
                 self.thread_logger.info(f"canceled:   [time till scheduled event ends] -> due to done todo - currently {threading.active_count()} threads open")
 
-            # set no todo_appointment to be active
-            self.dispatch_message(404, None)
-        # for None active todo_just remove them from the todo_calendar
-        else:
-            self.todo_calendar = [todo_app for todo_app in self.todo_calendar if todo_app[4] == self.todo_calendar[0][4]]
-
-            # calculate schedule start time
-            schedule_start = self.todo_calendar[-1][2] + timedelta(minutes=5)
+            # update schedule start
+            schedule_start += timedelta(minutes=5)
 
         # schedule todos
-        self.genetic_algorithm.tasks.clear()
+        self.genetic_algorithm.todos.clear()
         self.schedule_todos(schedule_start)
 
     # --------------------------------------
@@ -654,22 +929,10 @@ class Backend(object):
         # --- 300 -> Schedule Todos --- #
         # 301 => Schedule Todos Status/requests
         elif message_code == 301:
-            # todos where scheduled before
-            if len(self.todo_calendar) > 0:
-                # update calendar
-                self.todo_calendar = [self.todo_calendar[0]]
+            # request to schedule todos
+            thread = threading.Thread(target=lambda: self.schedule_todos(datetime.now()), daemon=True)
 
-                # calculate schedule start time
-                schedule_start = self.todo_calendar[0][2] + timedelta(minutes=5)
-
-                # schedule todos
-                self.genetic_algorithm.tasks.clear()
-                thread = threading.Thread(target=lambda: self.schedule_todos(schedule_start), daemon=True)
-            # scheduling todos for the first time
-            else:
-                # request to schedule todos
-                thread = threading.Thread(target=lambda: self.schedule_todos(datetime.now()), daemon=True)
-
+            # keep track of thread
             if not "schedule_todos" in self.threads:
                 thread.start()
                 self.threads.update({"schedule_todos": thread})
@@ -707,10 +970,7 @@ class Backend(object):
         elif message_code == 403:
             # "AT" -> Update todos specifications
             if message[0] == "AT":
-                thread = threading.Thread(target=lambda: self.dispatch_message(
-                    16,
-                    ["AT", message[1],  message[2], self.todo_lists[message[1]].add_task(message[2])]
-                ), daemon=True)
+                thread = threading.Thread(target=lambda: self.dispatch_message(16, ["AT", message[1],  message[2], self.todo_lists[message[1]].add_task(message[2])]), daemon=True)
                 thread.start()
 
                 # add thread to threads dict
@@ -723,12 +983,14 @@ class Backend(object):
                         self.thread_logger.info(f"started:    [add todo {counter}] - currently {threading.active_count()} threads open")
                         break
 
-            # "CT" -> set todo_state to done (check todos)
+            # "CT" -> set todo_state to done (check todo_)
             elif message[0] == "CT":
                 thread = threading.Thread(target=lambda: (
-                    self.todo_lists[message[1]].set_task_status_to_done(message[2]),
+                    # reschedule todos
                     self.update_schedule_calendar_for_done_todo(message[2]),
-                    self.dispatch_message(403, ["CT", message[1], message[2]])
+                    # send calendars
+                    self.dispatch_message(402, {"done todos": [self.done_todo_calendar, None]}),
+                    self.dispatch_message(402, {"scheduled todos": self.get_todo_calendar()}),
                 ), daemon=True)
                 thread.start()
 
@@ -749,6 +1011,20 @@ class Backend(object):
         # 405 => Update scheduling todos button label --> will not do anything | one way communication pass
         elif message_code == 405:
             pass
+
+        # 406 => Update schedule order
+        elif message_code == 406:
+            # "MU" -> move appointment up
+            if message[0] == "MU":
+                self.move_scheduled_todo_up(message[1])
+
+            # "MD" -> move appointment down
+            if message[0] == "MD":
+                self.move_scheduled_todo_down(message[1])
+
+            # "LO" -> lock appointment
+            if message[0] == "LO":
+                self.lock_todo(message[1])
 
         # --- 600 -> close program --- #
         # 601 => save config to config.py
@@ -802,12 +1078,12 @@ class Backend(object):
         for key, todo_list in self.notion_todo_lists.items():
             self.todo_lists.update({key: Notion_Todo_List_Integration(todo_list, self.notion_integration_secret)})
 
-        # update home.py with todos and appointments
-        self.send_homepy_todos()
-        self.send_homepy_appointments([datetime.today() - timedelta(days=10), datetime.today() + timedelta(days=20)])
-
         # send todo_calendar
         self.load_calendars(todos_calendar, done_todos_calendar)
+
+        # update home.py with todos and appointments
+        self.send_homepy_appointments([datetime.today() - timedelta(days=10), datetime.today() + timedelta(days=20)])
+        self.dispatch_message(405, "Schedule Todos")
 
     def load_calendars(self, todo_calendar, done_todo_calendar):
         # get appointments and todos
@@ -836,6 +1112,15 @@ class Backend(object):
         self.done_todo_calendar = done_todo_calendar
 
         if len(self.todo_calendar) > 0:
+            # assign appointments to todos
+            for i, app in enumerate(self.todo_calendar):
+                self.todos[app[4]]["order index"] = i
+                self.todos[app[4]]["appointments"] = [[app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]]
+
+            # set active todo_
+            ids = [self.todos[self.todo_calendar[0][4]]["todo list"], self.todo_calendar[0][4]]
+            self.dispatch_message(404, ids)
+
             # create thread that executes before appointment ist done
             thread = threading.Timer((self.todo_calendar[0][2] - datetime.now()).total_seconds(), self.update_schedule_calendar_at_event_end)
             thread.start()
@@ -845,22 +1130,8 @@ class Backend(object):
             # logging threads
             self.thread_logger.info(f"started:    [time till scheduled event ends] - currently {threading.active_count()} threads open")
 
-            # set todo_to active
-            todo_lists = self.get_todos()
-
-            # get first appointment id
-            for i, (key, todo_list) in enumerate(todo_lists.items()):
-                if [todo[3] for todo in todo_list].count(self.todo_calendar[0][4]):
-                    # set ids
-                    ids = [key, self.todo_calendar[0][4]]
-
-                    # send message
-                    self.dispatch_message(404, ids)
-
-                    break
-
         # send message to homepy
-        self.dispatch_message(402, {"done todos": self.done_todo_calendar, "scheduled todos": self.todo_calendar})
+        self.dispatch_message(402, {"done todos": [self.done_todo_calendar, None], "scheduled todos": self.get_todo_calendar()})
 
     def save_config(self):
         while "connection thread" in self.threads:
