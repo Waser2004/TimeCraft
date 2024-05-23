@@ -203,10 +203,12 @@ class Genetic_Algorithm(object):
             duration = todo[1]["properties"]["estimated time"] + todo[1]["properties"]["extra time"] - todo[1]["properties"]["elapsed duration"]
             task_timeframe = [time, time + datetime.timedelta(hours=duration)]
 
+            pause_time = 1
+
             # if there are no upcoming events
             if 0 == len(appointments):
                 timed_tasks.append([todo[0]] + task_timeframe)
-                time = task_timeframe[1] + datetime.timedelta(minutes=5)
+                time = task_timeframe[1] + datetime.timedelta(minutes=pause_time)
 
             # there are upcoming events
             else:
@@ -217,7 +219,7 @@ class Genetic_Algorithm(object):
                     if task_timeframe[0] <= appointment[1] and task_timeframe[1] <= appointment[1]:
 
                         timed_tasks.append([todo[0]] + task_timeframe)
-                        time = task_timeframe[1] + datetime.timedelta(minutes=5)
+                        time = task_timeframe[1] + datetime.timedelta(minutes=pause_time)
 
                         break
 
@@ -231,7 +233,7 @@ class Genetic_Algorithm(object):
                         # task fits before next appointment
                         else:
                             timed_tasks.append([todo[0]] + task_timeframe)
-                            time = task_timeframe[1] + datetime.timedelta(minutes=5)
+                            time = task_timeframe[1] + datetime.timedelta(minutes=pause_time)
                             appointments.remove(appointment)
 
                             break

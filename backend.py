@@ -683,6 +683,8 @@ class Backend(object):
         self.schedule_todos()
 
     def update_schedule_calendar_for_done_todo(self, todo):
+        pause_time = 1
+
         # log function
         self.func_logger.info(f"[backend] - update schedule calendar for done todo -> {todo}")
 
@@ -721,7 +723,7 @@ class Backend(object):
                 self.thread_logger.info(f"canceled:   [time till scheduled event ends] -> due to done todo - currently {threading.active_count()} threads open")
 
             # update schedule start
-            schedule_start += timedelta(minutes=5)
+            schedule_start += timedelta(minutes=pause_time)
 
         # schedule todos
         self.genetic_algorithm.todos.clear()
@@ -1086,6 +1088,8 @@ class Backend(object):
         self.dispatch_message(405, "Schedule Todos")
 
     def load_calendars(self, todo_calendar, done_todo_calendar):
+        self.done_todo_calendar = done_todo_calendar
+
         # get appointments and todos
         todo_lists = self.get_todos()
 
@@ -1095,7 +1099,7 @@ class Backend(object):
             todos += todo_list
 
         # filter todo_calendar
-        todo_calendar = [todo for todo in todo_calendar if todo[1] < datetime.now()]
+        todo_calendar = [todo for todo in todo_calendar if todo[2] > datetime.now()]
 
         for todo in todo_calendar[:]:
             # todo_has been set done
@@ -1103,23 +1107,25 @@ class Backend(object):
                 done_todo_calendar.append(todo)
                 todo_calendar.remove(todo)
 
-            # remove all todos that are not currently running
-            elif not todo[1] < datetime.now() < todo[2]:
-                todo_calendar.remove(todo)
+        if len(todo_calendar) > 0:
+            # assign appointments to respective todo_
+            for todo in todo_calendar:
+                if self.todos[todo[4]]["appointments"] is None:
+                    self.todos[todo[4]]["appointments"] = []
 
-        # load calendars
-        self.todo_calendar = todo_calendar
-        self.done_todo_calendar = done_todo_calendar
+                self.todos[todo[4]]["appointments"].append([todo[1], todo[2]])
 
-        if len(self.todo_calendar) > 0:
-            # assign appointments to todos
-            for i, app in enumerate(self.todo_calendar):
-                self.todos[app[4]]["order index"] = i
-                self.todos[app[4]]["appointments"] = [[app[1].replace(second=0, microsecond=0), app[2].replace(second=0, microsecond=0)]]
+                # set current todo_to active todo_
+                if todo[1] <= datetime.now() <= todo[2]:
+                    self.set_active_todo([self.todos[todo[4]]["todo list"], todo[4]])
 
-            # set active todo_
-            ids = [self.todos[self.todo_calendar[0][4]]["todo list"], self.todo_calendar[0][4]]
-            self.dispatch_message(404, ids)
+            # assign order indexes
+            sorted_todos = sorted([[key, todo] for key, todo in self.todos.items() if todo["appointments"] is not None], key=lambda x: x[1]["appointments"][0][0])
+            for i, todo in enumerate(sorted_todos):
+                self.todos[todo[0]]["order index"] = i
+
+            # create todo_calendar
+            self.todo_calendar, locks = self.get_todo_calendar()
 
             # create thread that executes before appointment ist done
             thread = threading.Timer((self.todo_calendar[0][2] - datetime.now()).total_seconds(), self.update_schedule_calendar_at_event_end)
@@ -1130,8 +1136,13 @@ class Backend(object):
             # logging threads
             self.thread_logger.info(f"started:    [time till scheduled event ends] - currently {threading.active_count()} threads open")
 
+        # no scheduled todos to load
+        else:
+            self.todo_calendar = []
+            locks = []
+
         # send message to homepy
-        self.dispatch_message(402, {"done todos": [self.done_todo_calendar, None], "scheduled todos": self.get_todo_calendar()})
+        self.dispatch_message(402, {"done todos": [self.done_todo_calendar, None], "scheduled todos": [self.todo_calendar, locks]})
 
     def save_config(self):
         while "connection thread" in self.threads:
@@ -1153,7 +1164,7 @@ class Backend(object):
             json.dump(config, config_json)
 
         # turn datetime to string for json
-        clean_todo_calendar = [[app[0], app[1].isoformat(), app[2].isoformat(), app[3], app[4]] for app in self.todo_calendar]
+        clean_todo_calendar = [[app[0], app[1].isoformat(), app[2].isoformat(), app[3], app[4]] for app in self.get_todo_calendar()[0]]
         clean_done_todo_calendar = [[app[0], app[1].isoformat(), app[2].isoformat(), app[3], app[4]] for app in self.done_todo_calendar]
 
         # calendar data object
